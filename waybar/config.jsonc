@@ -1,0 +1,66 @@
+{
+    "height": 45,
+    "spacing": 4,
+    "margin-top": 8,
+    "margin-bottom": 0,
+    "margin-left": 6,
+    "margin-right": 6,
+    "modules-left": [
+        "niri/workspaces",
+        "mpd",
+        "clock"
+    ],
+    "modules-center": [
+        "niri/window"
+    ],
+    "modules-right": [
+        "pulseaudio",
+        "network",
+        "cpu",
+        "memory",
+        "niri/language",
+        "clock",
+        "tray"
+    ],
+    "keyboard-state": {
+        "numlock": true,
+        "capslock": true,
+        "format": "{name} {icon}",
+        "format-icons": {
+            "locked": "",
+            "unlocked": ""
+        }
+    },
+    "mpd": {
+        "format": "{artist} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) {volume}% ",
+        "format-disconnected": "Disconnected ",
+        "format-stopped": "Stopped ",
+        "interval": 5
+    },
+    "tray": {
+        "spacing": 10
+    },
+    "clock": {
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format-alt": "{:%Y-%m-%d}"
+    },
+    "cpu": {
+        "format": "{usage}% ",
+        "tooltip": false
+    },
+    "memory": {
+        "format": "{}% "
+    },
+    "network": {
+        "format-wifi": "{essid} ",
+        "format-ethernet": "{ipaddr}/{cidr} ",
+        "tooltip-format": "{ifname} {gwaddr}",
+        "format-disconnected": "Disconnected 󰖪"
+    },
+    "pulseaudio": {
+        "format": "{volume}% {format_source}",
+        "format-bluetooth": "{volume}% {icon} {format_source}",
+        "format-source": "{volume}% ",
+        "on-click": "pavucontrol"
+    }
+}
