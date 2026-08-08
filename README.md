@@ -1,6 +1,6 @@
-#Niri-dotfiles
+# Niri-dotfiles
 
-##Features:
+## Features:
 - starship: Starship is a fast, lightweight, and customizable command-line prompt.
 - rofi: A fast and lightweight application that combines the functions of an application launcher, a window switcher, and a text-based menu.
 - waybar: A customizable status bar designed specifically for window managers and compositors based on the Wayland graphics protocol.
