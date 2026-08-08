@@ -7,39 +7,32 @@
 }
 
 window#waybar {
-    background-color: #222436;
+    margin: 6px 8px;
+    padding: 0;
+    background: transparent;
     border: none;
     color: #ffffff;
-    transition-property: background-color;
-    transition-duration: .5s;
 }
 
-window#waybar.hidden {
-    opacity: 0.2;
+window#waybar > box {
+    background-color: #222436;
+    border-radius: 12px;
 }
 
-window#waybar.termite {
-    background-color: #3F3F3F;
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: #828bb8;
+    margin: 4px;
+    border-radius: 8px;
+    padding-right: 4px;
+    padding-left: 4px;
 }
 
-window#waybar.chromium {
-    background-color: #000000;
-    border: none;
-}
-
-button {
-    box-shadow: inset 0 -3px transparent;
+#workspaces button {
+    padding: 0 8px;
     border: none;
     border-radius: 0;
-}
-
-button:hover {
-    background: inherit;
-    box-shadow: inset 0 -3px #ffffff;
-}
-
-#pulseaudio:hover {
-    background-color: #a37800;
 }
 
 #workspaces button {
@@ -60,18 +53,55 @@ button:hover {
 #workspaces button.urgent {
     background-color: #eb4d4b;
 }
-
-#clock,
-#cpu,
 #memory,
+#cpu,
 #network,
 #pulseaudio,
+#clock,
 #wireplumber,
 #language,
 #tray,
+#custom-browser,
+#custom-cmd,
+#custom-telegram,
+#custom-freetube,
+#custom-rmpc,
+#custom-yazi,
+#custom-nvim,
 #mpd {
-    padding: 2 10px;
+    margin: 4px 0;
     color: #ffffff;
-    background-color: #2980b9;
+    background-color: #3f4c73;
+    padding: 0 10px;
+    border-radius: 8px;
+}
+#clock {
+    min-width: 55px;
+}
+
+#pulseaudio {
+    min-width: 50px;
 
 }
+
+#network {
+    min-width: 60px;
+}
+
+#cpu {
+    min-width: 20px;
+}
+
+#memory {
+    min-width: 30px;
+}
+#custom-browser,
+#custom-cmd,
+#custom-telegram,
+#custom-rmpc,
+#custom-yazi,
+#custom-nvim,
+#custom-freetube {
+    min-width: 15px;
+}
+
