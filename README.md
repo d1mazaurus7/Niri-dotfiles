@@ -8,6 +8,7 @@
 
 ## Installation:
 
-```bash
+Clone the repository:
+``` bash
 git clone https://github.com/d1mazaurus7/Niri-dotfiles.git
 cd niri-dotfiles
