@@ -65,7 +65,7 @@ layer-rule {
     }
 }
 
-// startup 
+// startup
 spawn-at-startup "sh" "-c" "pkill -x waybar || true; sleep 0.2; exec waybar"
 spawn-at-startup "blueman-applet"
 spawn-at-startup "awww-daemon"
@@ -75,6 +75,8 @@ spawn-at-startup "mako"
 prefer-no-csd
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d-%m-%s.png"
+
+// animations
 animations {
     slowdown 1.5
 
@@ -125,16 +127,19 @@ window-rule {
 }
 
 binds {
-
     // Hotkey-overlay
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // Programs
-    Mod+Q hotkey-overlay-title="Terminal" { spawn "alacritty"; }
-    Mod+D hotkey-overlay-title="Launcher" { spawn "rofi" "-show" "drun"; }
-    Mod+E hotkey-overlay-title="Explorer" { spawn "alacritty" "-e" "yazi"; }
-    Mod+Shift+P hotkey-overlay-title="Color Picker" { spawn-sh "hyprpicker -a && notify-send 'Color copied to clipboard.'";}
-    Mod+Shift+M hotkey-overlay-title="Music "{ spawn "alacritty" "-e" "rmpc"; }
+    Mod+Q hotkey-overlay-title="Terminal" { spawn "alacritty"; } // Terminal (alacritty)
+    Mod+D hotkey-overlay-title="Launcher" { spawn "rofi" "-show" "drun"; } // Launcher (rofi)
+    Mod+E hotkey-overlay-title="Explorer" { spawn "alacritty" "-e" "yazi"; } // File manager (yazi)
+    Mod+Shift+P hotkey-overlay-title="Color Picker" { spawn-sh "hyprpicker -a && notify-send 'Color copied to clipboard.'";} // Color picker (hyprpicker)
+    Mod+Shift+M hotkey-overlay-title="Music" { spawn "alacritty" "-e" "rmpc"; } // Music (rmpc)
+    Mod+Shift+B hotkey-overlay-title="Browser" { spawn "qutebrowser"; } // Browser (qutebrowser)
+    Mod+Shift+T hotkey-overlay-title="Telegram" { spawn "Telegram"; } // Telegram
+    Mod+Shift+Y hotkey-overlay-title="Freetube" { spawn "freetube"; } // Freetube
+    Mod+Shift+U hotkey-overlay-title="Blueman link" { spawn "blueman-manager"; } // Blueman-manager (GUI for bluetooth)
     
     // Volume && music 
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
@@ -176,23 +181,13 @@ binds {
     Mod+Ctrl+Home { move-column-to-first; }
     Mod+Ctrl+End  { move-column-to-last; }
 
-    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
-    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
-
-    :Mod+Page_Down      { focus-workspace-down; }
+    Mod+Page_Down      { focus-workspace-down; }
     Mod+Page_Up        { focus-workspace-up; }
 
     Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
     Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
     Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
     Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
-
 
     Mod+1 { focus-workspace 1; }
     Mod+2 { focus-workspace 2; }

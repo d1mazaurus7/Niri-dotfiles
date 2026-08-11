@@ -11,7 +11,10 @@
     ],
     "modules-center": [
         "niri/window",
-        "clock"
+        "clock",
+        "custom/telegram",
+        "custom/freetube",
+        "custom/rmpc"
     ],
     "modules-right": [
         "pulseaudio",
