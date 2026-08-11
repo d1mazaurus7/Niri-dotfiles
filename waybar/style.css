@@ -61,13 +61,6 @@ window#waybar > box {
 #wireplumber,
 #language,
 #tray,
-#custom-browser,
-#custom-cmd,
-#custom-telegram,
-#custom-freetube,
-#custom-rmpc,
-#custom-yazi,
-#custom-nvim,
 #mpd {
     margin: 4px 0;
     color: #ffffff;
@@ -94,14 +87,5 @@ window#waybar > box {
 
 #memory {
     min-width: 30px;
-}
-#custom-browser,
-#custom-cmd,
-#custom-telegram,
-#custom-rmpc,
-#custom-yazi,
-#custom-nvim,
-#custom-freetube {
-    min-width: 15px;
 }
 

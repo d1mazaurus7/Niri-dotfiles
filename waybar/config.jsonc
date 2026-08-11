@@ -11,14 +11,7 @@
     ],
     "modules-center": [
         "niri/window",
-        "clock",
-        "custom/browser",
-        "custom/cmd",
-        "custom/telegram",
-        "custom/freetube",
-        "custom/rmpc",
-        "custom/nvim",
-        "custom/yazi"
+        "clock"
     ],
     "modules-right": [
         "pulseaudio",
@@ -61,34 +54,5 @@
         "format-bluetooth": "{volume}% {icon} {format_source}",
         "format-source": "{volume}% ",
         "on-click": "pavucontrol"
-    },
-    "custom/browser": {
-        "format": "󰈹",
-        "on-click": "command -v firefox >/dev/null && firefox || notify-send 'Firefox is not installed'"
-    },
-    "custom/cmd": {
-        "format": "",
-        "on-click": "command -v alacritty >/dev/null && alacritty || notify-send 'Alacritty is not installed'" 
-    },
-    "custom/telegram": {
-        "format": "",
-        "on-click": "command -v Telegram >/dev/null && Telegram || notify-send 'Telegram is not installed'"
-    },
-    "custom/freetube": {
-        "format": "",
-        "on-click": "command -v freetube >/dev/null && freetube || notify-send 'FreeTube is not installed'"
-    },
-    "custom/rmpc": {
-        "format": "󰎄",
-        "on-click": "command -v rmpc >/dev/null && alacritty -e rmpc || notify-send 'rmpc is not installed'"
-    },
-    "custom/nvim": {
-        "format": "",
-        "on-click": "command -v nvim >/dev/null && alacritty -e nvim || notify-send 'Neovim is not installed'"
-    },
-    "custom/yazi": {
-        "format": "",
-        "on-click": "command -v yazi >/dev/null && alacritty -e yazi || notify-send 'Yazi is not installed'"
     }
-
 }
