@@ -8,15 +8,16 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
     let 
       system = "x86_64-linux";
+      vars = import ./vars.nix;
       pkgs = nixpkgs.legacyPackages.${system};
       in {
         homeConfigurations."USER@HOST" = home-manager.lib.homeManagerConfiguration {
 	  inherit pkgs;
 	  modules = [
-	    
+	    ./modules/system/configuration.nix
 	  ];
 	};
 	formatter.${system} = pkgs.nixfmt-rfc-style;

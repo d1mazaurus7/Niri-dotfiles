@@ -1,5 +1,5 @@
 # home/default.nix
-{ config, pkgs, lib, inputs, ... }: 
+{ ... }: 
 {
    imports = [
       ./packages.nix
