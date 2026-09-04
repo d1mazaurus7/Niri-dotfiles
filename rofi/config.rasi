@@ -7,11 +7,8 @@ configuration {
 }
 
 @theme "/dev/null"
-
+@import "colors.rasi"
 * {
-  bg: #0A1114;
-  fg: #dadada;
-  al: #404749;
   border-radius: 0.0em;
   background-color: @bg;
   text-color: @fg;
@@ -19,6 +16,9 @@ configuration {
 
 window {
   location: center;
+  border: 3px;
+  border-radius: 12px;
+  border-color: white;
   width: 25%;
   spacing: 0;
   children: [ box ];

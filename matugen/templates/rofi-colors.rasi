@@ -1,0 +1,5 @@
+* {
+  bg: {{colors.background.default.hex}};
+  fg: {{colors.on_background.default.hex}};
+  al: {{colors.outline.default.hex}};
+}

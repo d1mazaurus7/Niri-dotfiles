@@ -1,0 +1,119 @@
+    "$schema" = 'https://starship.rs/config-schema.json'
+    palette = "matugen"
+
+    format = """
+    [░▒▓](fg:os_bg)\
+    $os\
+    [](bg:dir_bg fg:os_bg)\
+    $directory\
+    [](fg:dir_bg bg:git_bg)\
+    $git_branch\
+    $git_status\
+    [](fg:git_bg bg:lang_bg)\
+    $nodejs\
+    $bun\
+    $rust\
+    $golang\
+    $php\
+    [](fg:lang_bg bg:time_bg)\
+    $time\
+    [ ](fg:time_bg)\
+    \n$character"""
+
+    [palettes.matugen]
+    os_bg = "{{ colors.primary_container.default.hex }}"
+    os_fg = "{{ colors.on_primary_container.default.hex }}"
+
+    dir_bg = "{{ colors.primary.default.hex }}"
+    dir_fg = "{{ colors.on_primary.default.hex }}"
+
+    git_bg = "{{ colors.secondary_container.default.hex }}"
+    git_fg = "{{ colors.on_secondary_container.default.hex }}"
+
+    lang_bg = "{{ colors.surface_container.default.hex }}"
+    lang_fg = "{{ colors.primary.default.hex }}"
+
+    time_bg = "{{ colors.surface_container_lowest.default.hex }}"
+    time_fg = "{{ colors.on_surface_variant.default.hex }}"
+
+    # character
+    ok = "{{ colors.primary.default.hex }}"
+    err = "{{ colors.error.default.hex }}"
+
+    [directory]
+    style = "fg:dir_fg bg:dir_bg"
+    format = "[ $path ]($style)"
+    truncation_length = 3
+    truncation_symbol = "…/"
+
+    [directory.substitutions]
+    "Загрузки" = " "
+    "Документы" = "󰈙 "
+    "Музыка" = " "
+    "Картинки" = " "
+    "Documents" = "󰈙 "
+    "Music" = " "
+    "Downloads" = " "
+    "Pictures" = " "
+    ".config" = " "
+    "Notes" = "󰎚 "
+    "~" = " "
+    ".steam" = " "
+
+    [git_branch]
+    symbol = ""
+    style = "bg:git_bg"
+    format = '[[ $symbol $branch ](fg:git_fg bg:git_bg)]($style)'
+
+    [git_status]
+    style = "bg:git_bg"
+    format = '[[($all_status$ahead_behind )](fg:git_fg bg:git_bg)]($style)'
+
+    [nodejs]
+    symbol = ""
+    style = "bg:lang_bg"
+    format = '[[ $symbol ($version) ](fg:lang_fg bg:lang_bg)]($style)'
+
+    [bun]
+    symbol = ""
+    style = "bg:lang_bg"
+    format = '[[ $symbol ($version) ](fg:lang_fg bg:lang_bg)]($style)'
+
+    [rust]
+    symbol = ""
+    style = "bg:lang_bg"
+    format = '[[ $symbol ($version) ](fg:lang_fg bg:lang_bg)]($style)'
+
+    [golang]
+    symbol = ""
+    style = "bg:lang_bg"
+    format = '[[ $symbol ($version) ](fg:lang_fg bg:lang_bg)]($style)'
+
+    [php]
+    symbol = ""
+    style = "bg:lang_bg"
+    format = '[[ $symbol ($version) ](fg:lang_fg bg:lang_bg)]($style)'
+
+    [time]
+    disabled = false
+    time_format = "%R"
+    style = "bg:time_bg"
+    format = '[[  $time ](fg:time_fg bg:time_bg)]($style)'
+
+    [os]
+    style = "bg:os_bg fg:os_fg"
+    format = "[ $symbol ]($style)"
+    disabled = false
+
+    [os.symbols]
+    Linux = "󰌽"
+    Gentoo = "󰣨"
+    NixOS = ""
+    Android = ""
+    Arch = "󰣇"
+    Artix = ""
+    EndeavourOS = ""
+
+    [character]
+    success_symbol = "[❯](fg:ok bold)"
+    error_symbol = "[❯](fg:err bold)"

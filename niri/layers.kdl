@@ -1,0 +1,23 @@
+
+// swaybg
+layer-rule {
+    match namespace="^wallpaper$"
+}
+
+// awww-daemon
+layer-rule {
+    match namespace="^awww-daemon$"
+    place-within-backdrop true
+    background-effect {
+        blur true
+        saturation 3.0
+    }
+}
+
+// quickshell-home
+layer-rule {
+    match namespace="quickshell-home"
+    place-within-backdrop true
+    geometry-corner-radius 18
+}
+

@@ -1,0 +1,11 @@
+input {
+    focus-follows-mouse
+    keyboard {
+        xkb {
+            layout "us,ru"
+            options "grp:alt_shift_toggle,compose:ralt,ctrl:nocaps"
+        }
+        numlock
+    }
+}
+
