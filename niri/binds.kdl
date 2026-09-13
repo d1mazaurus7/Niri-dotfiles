@@ -14,14 +14,18 @@ binds {
     Mod+Shift+U hotkey-overlay-title="Blueman link" { spawn "blueman-manager"; } // Blueman-manager
     Ctrl+Shift+L hotkey-overlay-title="Lock screen" { spawn "hyprlock"; }
     Mod+Shift+N { spawn-sh "swaync-client -rs && swaync-client -t -sw"; }
-    
+
+    // Shell
+    Ctrl+Shift+P { spawn "qs" "ipc" "call" "power-profiles" "toggle"; }
+    Ctrl+Shift+S { spawn "qs" "ipc" "call" "systemctl" "toggle"; }
+
+
     // Volume && music 
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+ -l 1.0"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-"; }
-    XF86AudioPlay  { spawn "mpc" "toggle"; }
-    XF86AudioNext  { spawn "mpc" "next"; }
-    XF86AudioPrev  { spawn "mpc" "prev"; }	
-    XF86AudioStop  { spawn "mpc" "stop"; }
+    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "-p" "space.rirusha.Cassette,mpd" "previous"; }
+    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "-p" "space.rirusha.Cassette,mpd" "play-pause"; }
+    XF86AudioNext allow-when-locked=true { spawn "playerctl" "-p" "space.rirusha.Cassette,mpd" "next"; }
 
     // Window
     Mod+O repeat=false { toggle-overview; }

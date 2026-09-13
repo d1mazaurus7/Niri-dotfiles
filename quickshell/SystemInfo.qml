@@ -57,7 +57,7 @@ Rectangle {
                 }
                 const used = total - avail
                 const gb = n => (n / 1024 / 1024).toFixed(1)
-                root.ramLabel = `RAM: ${gb(used)} / ${gb(total)}G`
+                root.ramLabel = `RAM: ${gb(used)}/${gb(total)}G`
             }
         }
     }
@@ -85,6 +85,8 @@ Rectangle {
             font.pixelSize: root.fontSize
             font.bold: true
             text: "CPU: " + root.cpuUsage.toFixed(0) + "%"
+            font.family: "JetBrains Mono Bold"
+
         }
 
         Text {
@@ -92,6 +94,8 @@ Rectangle {
             font.pixelSize: root.fontSize
             font.bold: true
             text: root.ramLabel
+            font.family: "JetBrains Mono Bold"
+
         }
     }
 }

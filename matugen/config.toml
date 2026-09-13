@@ -22,7 +22,7 @@ output_path = "~/.config/quickshell/theme/Palette.qml"
 
 [templates.swaync]
 input_path = "~/.config/matugen/templates/swaync-colors.css"
-output_path = "~/.config/swaync/colors.css"
+output_path = "~/.config/swaync/style.css"
 
 [templates.rofi]
 input_path = "/home/valtrynx/.config/matugen/templates/rofi-colors.rasi"

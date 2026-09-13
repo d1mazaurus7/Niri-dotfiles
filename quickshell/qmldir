@@ -8,3 +8,7 @@ Wifi 1.0 Wifi.qml
 Cava 1.0 Cava.qml
 Volume_pill 1.0 Volume_pill.qml
 Player 1.0 Player.qml
+Tray 1.0 Tray.qml
+PowerProfiles 1.0 PowerProfiles.qml
+Systemctl 1.0 Systemctl.qml
+Bluetooth 1.0 Bluetooth.qml

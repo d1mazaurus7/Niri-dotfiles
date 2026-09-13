@@ -70,12 +70,13 @@ Rectangle {
             text: root.icon
             color: Theme.Palette.on_surface
             font.pixelSize: 13
-            font.family: "Symbols Nerd Font"
+            font.family: "JetBrains Mono Bold"
         }
 
         Text {
             text: root.ready ? (root.percent + "%") : "--%"
             font.bold: true
+            font.family: "JetBrains Mono Bold"
             color: Theme.Palette.on_surface
         }
     }

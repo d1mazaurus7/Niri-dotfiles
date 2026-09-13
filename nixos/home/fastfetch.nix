@@ -4,25 +4,29 @@
         enable = true;
         settings = {
             logo = {
-                source = "nixos";
+                type = "file";
+                source = "~/.config/fastfetch/ember-logo.txt";
+                position =  "top";
+                color = {
+                    "1" = "white";
+                };
                 padding = {
-                    right = 1;
+                    right = 0;
+                    left = 0;
+                    top = 0;
+                    bottom = 0;
                 };
             };
             display = {
-                separator = "  ";
+                separator = " : ";
             };
             modules = [
-                "title"
                 "os"
-                "kernel"
-                "uptime"
                 "terminal"
                 "cpu"
                 "gpu"
                 "memory"
                 "disk"
-                "colors"
             ];
         };
     };

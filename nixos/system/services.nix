@@ -1,0 +1,47 @@
+{ pkgs, ... }: 
+{
+
+# GPU and CPU
+hardware.graphics.enable = true;
+hardware.graphics.enable32Bit = true;
+hardware.cpu.amd.updateMicrocode = true;
+boot.kernelParams = [ "amd_pstate=active" ];
+
+
+# bluetooth
+hardware.bluetooth.enable = true;
+hardware.bluetooth.powerOnBoot = true;
+
+environment.sessionVariables = {
+    XDG_CURRENT_DESKTOP = "niri";
+    XDG_SESSION_TYPE = "wayland";
+  };
+
+# power daemon
+services.power-profiles-daemon.enable = true;
+
+# shell
+programs.zsh.enable = true;
+systemd.user.tmpfiles.rules = [
+    "d /home/valtrynx/Music 0755 valtrynx users -"
+    "d /home/valtrynx/.config/mpd/playlists 0755 valtrynx users -"
+];
+
+# sound
+security.rtkit.enable = true;
+services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+    wireplumber.enable = true;
+};
+
+# flatpak 
+services.flatpak.enable = true;
+
+# mullvad-vpn
+services.mullvad-vpn.enable = true;
+security.polkit.enable = true;
+}

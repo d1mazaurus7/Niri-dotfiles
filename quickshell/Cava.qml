@@ -6,7 +6,7 @@ import "theme" as Theme
 Rectangle {
     id: root
 
-    property int barWidth: 4
+    property int barWidth: 5
     property int barHeight: 22
     property int barSpacing: 3
     property var values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

@@ -10,17 +10,35 @@ Item {
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
+    readonly property int playerCount: Mpris.players.values.length
+
     readonly property var player: {
+        const n = root.playerCount
         const list = Mpris.players.values
-        if (!list || list.length === 0)
+        if (!n)
             return null
-        for (let i = 0; i < list.length; i++)
-            if (list[i].playbackState === MprisPlaybackState.Playing)
-                return list[i]
+        for (let i = 0; i < n; i++) {
+            const p = list[i]
+            if (p && p.isPlaying)
+                return p
+        }
         return list[0]
     }
 
-    property real pos: 0
+    property real anchorPos: 0
+    property real anchorMs: 0
+
+    readonly property real pos: {
+        if (!player)
+            return 0
+        if (!player.isPlaying)
+            return player.position > 0 ? player.position : anchorPos
+        const p = player.position
+        if (p > 0.5)
+            return p
+        const dt = (Date.now() - anchorMs) / 1000
+        return Math.max(0, anchorPos + dt * (player.rate || 1))
+    }
 
     function fmt(t) {
         if (!isFinite(t) || t < 0)
@@ -41,13 +59,43 @@ Item {
             player.loopState = MprisLoopState.None
     }
 
-    Timer {
-        interval: 500
-        running: player !== null
-        repeat: true
+    function rememberPos() {
+        if (!player)
+            return
+        const p = player.position
+        if (p > 0) {
+            root.anchorPos = p
+            root.anchorMs = Date.now()
+        }
+    }
+
+    function playVolumeSound() {
+        Quickshell.execDetached([
+            "pw-play",
+            `${Quickshell.shellDir}/assets/audio-volume-change.oga`
+        ])
+    }
+
+
+    FrameAnimation {
+        running: root.player !== null && root.player.playbackState === MprisPlaybackState.Playing
         onTriggered: {
-            if (player)
-                root.pos = player.position
+            if (root.player)
+                root.player.positionChanged()
+        }
+    }
+
+    Connections {
+        target: root.player
+        function onPositionChanged() {
+            root.rememberPos()
+        }
+        function onTrackTitleChanged() {
+            root.anchorPos = 0
+            root.anchorMs = Date.now()
+        }
+        function onIsPlayingChanged() {
+            root.rememberPos()
         }
     }
 
@@ -67,6 +115,7 @@ Item {
                 color: Theme.Palette.text
                 font.pixelSize: 14
                 font.bold: true
+                font.family: "JetBrains Mono Bold"
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }
@@ -84,6 +133,8 @@ Item {
                 color: Theme.Palette.subtext
                 font.pixelSize: 12
                 font.bold: true
+                font.family: "JetBrains Mono Bold"
+
             }
         }
 
@@ -95,11 +146,18 @@ Item {
             PlayerBtn {
                 text: player && player.loopState === MprisLoopState.Track ? "󰑘" : ""
                 active: player && player.loopState !== MprisLoopState.None
-                onClicked: cycleLoop()
+                onClicked: {
+                    cycleLoop()
+                    playVolumeSound()
+                }
             }
             PlayerBtn {
                 text: ""
-                onClicked: if (player && player.canGoPrevious) player.previous()
+                onClicked: {
+                    if (player && player.canGoPrevious) 
+                        player.previous()
+                    playVolumeSound()
+                }
             }
             PlayerBtn {
                 text: player && player.isPlaying ? "" : ""
@@ -107,7 +165,11 @@ Item {
             }
             PlayerBtn {
                 text: ""
-                onClicked: if (player && player.canGoNext) player.next()
+                onClicked: {
+                    if (player && player.canGoNext) 
+                        player.next()
+                    playVolumeSound()
+                }
             }
         }
     }

@@ -88,7 +88,7 @@ Scope {
                 height: pill.knobSize
                 width: Math.max(height, knob.x + knob.width - x)
                 radius: height / 2
-                color: Theme.Palette.on_surface
+                color: Theme.Palette.primary
             }
 
             Rectangle {
@@ -98,7 +98,7 @@ Scope {
                 width: pill.knobSize
                 height: pill.knobSize
                 radius: width / 2
-                color: Qt.darker(Theme.Palette.on_surface, 1.45)
+                color: Qt.darker(Theme.Palette.primary, 1.45)
 
                 Behavior on x {
                     NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
