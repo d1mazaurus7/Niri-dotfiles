@@ -1,0 +1,2 @@
+spawn-at-startup "systemctl" "--user" "enable" "--now" "easyeffects"
+spawn-at-startup "awww-daemon"

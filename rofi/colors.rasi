@@ -1,5 +1,6 @@
 * {
-  bg: #12140e;
-  fg: #e2e3d8;
-  al: #8f9285;
+  bg: #1d1d06;
+  border: #cbcb76;
+  fg: #e6e3d5;
+  al: #939182;
 }

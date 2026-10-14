@@ -17,8 +17,8 @@ configuration {
 window {
   location: center;
   border: 3px;
-  border-radius: 12px;
-  border-color: white;
+  border-radius: 0px;
+  border-color: @border;
   width: 25%;
   spacing: 0;
   children: [ box ];
