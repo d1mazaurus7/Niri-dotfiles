@@ -1,13 +1,15 @@
+// Ввод
+
 hotkey-overlay {
     skip-at-startup
-}
+} // показ хоткеев
 
 input {
-    focus-follows-mouse
+    focus-follows-mouse // фокус следует за мышью
     keyboard {
         xkb {
-            layout "us,ru"
-            options "grp:alt_shift_toggle"
+            layout "us,ru" // языки клавиатуры
+            options "grp:alt_shift_toggle" // переключение по SHIFT+ALT
         }
     }
 }

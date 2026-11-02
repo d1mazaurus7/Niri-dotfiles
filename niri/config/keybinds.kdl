@@ -1,34 +1,47 @@
+// Бинды
+
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
-    Mod+Q           { spawn "foot"; }
-    Mod+B           { spawn "qutebrowser"; }
-    Mod+E           { spawn "foot" "-e" "yazi"; }
-    Mod+L           { spawn "hyprlock"; }
-    Mod+O           { toggle-overview; }
-    Mod+C           { close-window; }
-    Mod+Left        { focus-column-left; }
-    Mod+Right       { focus-column-right; }
-    Mod+Up          { focus-window-or-workspace-up; }
-    Mod+Down        { focus-window-or-workspace-down; }
-    Mod+V           { toggle-window-floating; }
-    Mod+D           { spawn-sh "/home/valtrynx/.local/bin/rofi-launcher"; }
-    Print           { screenshot; }
 
-    XF86AudioLowerVolume {spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02-"; }
-    XF86AudioRaiseVolume { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02+"; }
-    XF86AudioPlay { spawn "playerctl" "play-pause"; }
-    XF86AudioNext { spawn "playerctl" "next"; }
-    XF86AudioPrev { spawn "playerctl" "previous"; }
+    // Programms
+    Mod+Q           hotkey-overlay-title="открыть терминал"         { spawn "foot"; }
+    Mod+E           hotkey-overlay-title="открыть проводник"        { spawn "nautilus"; }
+    Mod+M           hotkey-overlay-title="открыть музыку"           {spawn "foot" "-e" "rmpc";}
+    // 
+    Mod+O           hotkey-overlay-title="открыть 'обзор'"          { toggle-overview; }
+    Mod+C           hotkey-overlay-title="закрыть окно"             { close-window; }                                                 
+    Mod+Left        hotkey-overlay-title="листать влево"            { focus-column-left; }                                               
+    Mod+Right       hotkey-overlay-title="листать вправо"           { focus-column-right; }                                           
+    Mod+Up          hotkey-overlay-title="листать вверх "           { focus-window-or-workspace-up; }                                      
+    Mod+Down        hotkey-overlay-title="листать вниз"             { focus-window-or-workspace-down; }
+    Mod+Shift+V     hotkey-overlay-title="сделать окно плавающим"   { toggle-window-floating; }                                       
 
+    // Shell //
+    Super+Space     hotkey-overlay-title="открыть лаунчер"          { spawn "qs" "ipc" "call" "launcher" "toggle"; }
+    Mod+W           hotkey-overlay-title="открыть выбор обоев"      { spawn "qs" "ipc" "call" "wallpaper" "toggle"; }
+    Mod+N           hotkey-overlay-title="открыть центр уведомлений"{ spawn "qs" "ipc" "call" "noti-center" "toggle"; }
+    Mod+P           hotkey-overlay-title="открыть плеер"            { spawn "qs" "ipc" "call" "player" "toggle"; }
+    Mod+A           hotkey-overlay-title="открыть ИИ ассистента"    { spawn "qs" "ipc" "call" "assistant" "toggle"; }
+    Mod+S           hotkey-overlay-title="открыть настройки"        { spawn "qs" "ipc" "call" "settings" "toggle"; }
+    Print           hotkey-overlay-title="сделать скриншот"         { spawn "qs" "ipc" "call" "screenshot" "capture"; }
+    Mod+Shift+S     hotkey-overlay-title="открыть секундомер"       { spawn "qs" "ipc" "call" "stopwatch" "toggle"; }
+    Mod+Shift+N     hotkey-overlay-title="открыть мини-плеер"       { spawn "qs" "ipc" "call" "music" "toggle"; }
+    Mod+Escape      hotkey-overlay-title="открыть мини-плеер"       { spawn "qs" "ipc" "call" "power" "toggle"; }
+
+    // Sound
+    XF86AudioLowerVolume   hotkey-overlay-title="понизить громкость" { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02-"; }
+    XF86AudioRaiseVolume   hotkey-overlay-title="повысить громкость" { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02+"; }
+    XF86AudioPlay          hotkey-overlay-title="пауза/играть"       { spawn "playerctl" "play-pause"; }
+    XF86AudioNext          hotkey-overlay-title="следующий трек"     { spawn "playerctl" "next"; }
+    XF86AudioPrev          hotkey-overlay-title="предыдущий трек"    { spawn "playerctl" "previous"; }
+
+    // Windows
     Mod+Ctrl+Left { move-column-left; }
     Mod+Ctrl+Right { move-column-right; }
     Mod+Ctrl+Up { move-column-to-workspace-up; }
     Mod+Ctrl+Down { move-column-to-workspace-down; }
-
-
     Mod+Page_Down      { focus-workspace-down; }
     Mod+Page_Up        { focus-workspace-up; }
-
     Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
     Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
     Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
@@ -39,7 +52,6 @@ binds {
     Mod+Shift+Up    { move-window-up; }
     Mod+Shift+Right { move-column-right; }
 
-
     Mod+1 { focus-workspace 1; }
     Mod+2 { focus-workspace 2; }
     Mod+3 { focus-workspace 3; }
@@ -49,7 +61,6 @@ binds {
     Mod+7 { focus-workspace 7; }
     Mod+8 { focus-workspace 8; }
     Mod+9 { focus-workspace 9; }
-
     Mod+Shift+1 { move-column-to-workspace 1; }
     Mod+Shift+2 { move-column-to-workspace 2; }
     Mod+Shift+3 { move-column-to-workspace 3; }
@@ -59,11 +70,8 @@ binds {
     Mod+Shift+7 { move-column-to-workspace 7; }
     Mod+Shift+8 { move-column-to-workspace 8; }
     Mod+Shift+9 { move-column-to-workspace 9; }
-
     Mod+BracketLeft  { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
     Mod+R { switch-preset-column-width; }
     Mod+F { maximize-column; }
-    Mod+Shift+M { maximize-window-to-edges; }
-    Mod+M {spawn "foot" "-e" "rmpc";}
 }

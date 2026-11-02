@@ -1,4 +1,0 @@
-spawn-at-startup "blueman-applet &"
-spawn-at-startup "playerctld" "daemon"
-spawn-at-startup "/home/valtrynx/.config/niri/session-setup.sh"
-spawn-at-startup "/home/valtrynx/sysManager/target/release/sysManager"

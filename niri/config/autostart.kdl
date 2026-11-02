@@ -1,2 +1,4 @@
-spawn-at-startup "systemctl" "--user" "enable" "--now" "easyeffects"
-spawn-at-startup "awww-daemon"
+// Автостарт
+spawn-at-startup "systemctl" "--user" "enable" "--now" "easyeffects"  // звуковые эффекты (эквалайзер)
+spawn-at-startup "awww-daemon"  // менеджер обоев
+spawn-at-startup "quickshell"  // оболочка
