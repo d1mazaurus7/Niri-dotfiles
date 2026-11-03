@@ -10,7 +10,7 @@
         "surfaceOpacity": 0.6
     },
     "assistant": {
-        "apiKey": "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",
+        "apiKey": "",
         "avatar": "",
         "clearCommand": "/clear",
         "description": "Твоя личная горничная",
