@@ -8,6 +8,9 @@ import "../../theme" as Theme
 import "../../shell/theme"
 import "../../shell/config"
 import "../../components/animations" as Anim
+import "controls"
+import "controls/Icons.js" as Icons
+import "widgets/Registry.js" as Registry
 
 // Центр уведомлений: панель справа почти на всю высоту экрана.
 // Сам элемент кладётся в бар у правого края; его ширина (reserve)
@@ -25,11 +28,15 @@ Item {
     property bool ipcEnabled: false
     // Общее состояние уведомлений (NotificationState).
     required property var notifications
+    // Сервис записи экрана (services/recorder/Recorder.qml)
+    property var recorderService: null
+    // Сервис скриншотов (services/screenshot/Screenshot.qml)
+    property var screenshotService: null
 
     readonly property var cfg: Config.options.notiCenter
     property int panelWidth: cfg.width
-    // Масштаб всех размеров относительно базового макета шириной 380.
-    readonly property real s: panelWidth / 380
+    // Масштаб всех размеров (не зависит от ширины панели)
+    readonly property real s: cfg.scale
 
     signal openOutputRequested(string name)
 
@@ -52,6 +59,20 @@ Item {
             return;
         }
         focusedOutput.running = true;
+    }
+
+    // Закрыть центр и выполнить fn, когда панель скроется (чтобы не попала в кадр)
+    property var afterHide: null
+    function runHidden(fn: var): void {
+        afterHide = fn;
+        openOutputRequested("");
+    }
+    onShownChanged: {
+        if (shown || !afterHide)
+            return;
+        const fn = afterHide;
+        afterHide = null;
+        fn();
     }
 
     function play(sound: string): void {
@@ -87,15 +108,29 @@ Item {
     onOpenChanged: {
         if (open)
             brightnessGet.running = true;
-        else
+        else {
             page = "";
+            editing = false;
+        }
+        // Центр открыт снова до скрытия — действие отменяется
+        if (open)
+            afterHide = null;
     }
+
+    // Режим редактирования виджетов
+    property bool editing: false
+    // Каталог виджетов с полными путями
+    readonly property var catalog: Registry.widgets.map(w => Object.assign({ url: Qt.resolvedUrl("widgets/" + w.source) }, w))
+
+    LayoutState { id: layout }
 
     // ---- Состояние: Wi-Fi ----
 
     readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property var wifiNetwork: wifiDevice ? (wifiDevice.networks.values.find(n => n.connected) ?? null) : null
     readonly property bool wifiOn: !!wifiDevice && Networking.wifiEnabled
+    // Подключённый Ethernet (приоритетнее Wi-Fi в плитке)
+    readonly property var wiredDevice: Networking.devices.values.find(d => d.type === DeviceType.Wired && d.nmManaged && d.connected) ?? null
     readonly property int wifiOthersCount: wifiDevice ? wifiDevice.networks.values.filter(n => !n.connected && n.name !== "").length : 0
 
     // ---- Состояние: Bluetooth ----
@@ -163,8 +198,9 @@ Item {
         id: clock
         precision: SystemClock.Seconds
     }
+    readonly property date now: clock.date
 
-    // Внутренняя страница (заглушка): "", "wifi", "bluetooth" или "note".
+    // Внутренняя страница (заглушка): "", "wifi", "bluetooth", "recorder", "screenshot" или "note".
     property string page: ""
     // Дата открытой заметки календаря
     property date noteDate: new Date()
@@ -209,142 +245,60 @@ Item {
                     NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: Tokens.animationMedium; easing.type: Easing.OutCubic }
                 }
 
-                // Время, дата, день недели
+                // Кнопки: настройки и редактор виджетов
                 Item {
                     width: parent.width
-                    height: timeCol.height
-                    visible: root.cfg.showClock
-
-                    Column {
-                        id: timeCol
-                        Text {
-                            text: Qt.formatDateTime(clock.date, root.cfg.showSeconds ? "HH:mm:ss" : "HH:mm")
-                            color: Theme.Palette.on_surface
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: Math.round(40 * root.s)
-                            font.weight: Font.Light
-                        }
-                        Text {
-                            visible: root.cfg.showDate
-                            text: clock.date.toLocaleDateString(Qt.locale(), "d MMMM yyyy")
-                            color: Theme.Palette.on_surface_variant
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: Math.round(12 * root.s)
-                        }
-                    }
+                    height: 44 * root.s
 
                     Text {
-                        visible: root.cfg.showWeekday
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.topMargin: 8 * root.s
-                        text: clock.date.toLocaleDateString(Qt.locale(), "ddd")
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity: root.editing ? 1 : 0
+                        visible: opacity > 0
+                        text: "Виджеты"
                         color: Theme.Palette.on_surface
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(16 * root.s)
-                    }
-                }
-
-                // Wi-Fi и Bluetooth: нажатая плитка расширяется, соседняя сжимается,
-                // сумма ширин постоянна, поэтому за пределы окна они не выходят.
-                Item {
-                    id: tiles
-                    width: parent.width
-                    height: 56 * root.s
-                    visible: root.cfg.showWifi || root.cfg.showBluetooth
-
-                    readonly property real gap: 10 * root.s
-                    readonly property real base: (width - gap) / 2
-                    readonly property real grow: 28 * root.s
-                    readonly property string pressedTile: wifiTile.down ? "wifi" : btTile.down ? "bluetooth" : ""
-
-                    function tileWidth(name: string): real {
-                        // Одна плитка — на всю ширину
-                        if (!root.cfg.showWifi || !root.cfg.showBluetooth)
-                            return width;
-                        if (pressedTile === "")
-                            return base;
-                        return pressedTile === name ? base + grow : base - grow;
+                        Behavior on opacity { Smooth {} }
                     }
 
-                    Tile {
-                        id: wifiTile
-                        visible: root.cfg.showWifi
-                        s: root.s
-                        width: tiles.tileWidth("wifi")
-                        title: "Wi-Fi"
-                        active: Networking.wifiEnabled
-                        subtitle: !Networking.wifiEnabled ? "Выключен"
-                            : root.wifiNetwork ? root.wifiNetwork.name : "Не подключено"
-                        onToggled: {
-                            Networking.wifiEnabled = !Networking.wifiEnabled;
-                            root.play(Networking.wifiEnabled ? "power_on" : "power_off");
-                        }
-                        onExpand: {
-                            root.play("list");
-                            root.page = "wifi";
-                        }
-                    }
-
-                    Tile {
-                        id: btTile
-                        visible: root.cfg.showBluetooth
-                        s: root.s
+                    Row {
                         anchors.right: parent.right
-                        width: tiles.tileWidth("bluetooth")
-                        title: "Bluetooth"
-                        active: !!root.btAdapter && root.btAdapter.enabled
-                        subtitle: !root.btAdapter ? "Нет адаптера"
-                            : !root.btAdapter.enabled ? "Выключен"
-                            : root.btDevice ? root.btDevice.name : "Не подключено"
-                        onToggled: {
-                            if (!root.btAdapter)
-                                return;
-                            root.btAdapter.enabled = !root.btAdapter.enabled;
-                            root.play(root.btAdapter.enabled ? "power_on" : "power_off");
+                        spacing: 8 * root.s
+
+                        IconButton {
+                            s: root.s
+                            icon: Icons.settings
+                            color: Theme.Palette.surface_container_high
+                            onClicked: {
+                                root.play("click");
+                                Quickshell.execDetached(["qs", "ipc", "call", "settings", "open"]);
+                                root.openOutputRequested("");
+                            }
                         }
-                        onExpand: {
-                            root.play("list");
-                            root.page = "bluetooth";
+
+                        IconButton {
+                            s: root.s
+                            icon: root.editing ? Icons.check : Icons.edit
+                            checked: root.editing
+                            color: checked ? Theme.Palette.primary : Theme.Palette.surface_container_high
+                            contentColor: checked ? Theme.Palette.on_primary : Theme.Palette.on_surface
+                            onClicked: {
+                                root.play("click");
+                                root.editing = !root.editing;
+                            }
                         }
                     }
                 }
 
-                Tile {
-                    s: root.s
+                WidgetGrid {
                     width: parent.width
-                    height: 56 * root.s
-                    visible: root.cfg.showDnd
-                    expandable: false
-                    title: "Не беспокоить"
-                    active: root.notifications.dnd
-                    subtitle: active ? "Включено" : "Выключено"
-                    onToggled: {
-                        root.notifications.dnd = !root.notifications.dnd;
-                        root.play(root.notifications.dnd ? "power_on" : "power_off");
-                    }
-                }
-
-                Pill {
                     s: root.s
-                    width: parent.width
-                    visible: root.cfg.showBrightness
-                    label: "Яркость"
-                    available: root.brightnessAvailable
-                    value: root.brightness
-                    onMoved: v => root.setBrightness(v)
-                    onScrolled: root.play("button")
-                }
-
-                Pill {
-                    s: root.s
-                    width: parent.width
-                    visible: root.cfg.showVolume
-                    label: root.sink && root.sink.audio && root.sink.audio.muted ? "Громкость (без звука)" : "Громкость"
-                    available: !!(root.sink && root.sink.audio)
-                    value: available ? Math.min(1, root.sink.audio.volume) : 0
-                    onMoved: v => root.sink.audio.volume = v
-                    onScrolled: root.play("button")
+                    model: layout.model
+                    catalog: root.catalog
+                    ctx: root
+                    rowHeight: root.cfg.widgetHeight * root.s
+                    editing: root.editing
+                    onEdited: layout.save()
                 }
             }
 
@@ -371,7 +325,7 @@ Item {
                     anchors.verticalCenter: clearBtn.verticalCenter
                     text: "Уведомления"
                     color: Theme.Palette.on_surface
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Tokens.typography.family
                     font.pixelSize: Math.round(16 * root.s)
                 }
 
@@ -412,7 +366,7 @@ Item {
                     visible: notiArea.count === 0
                     text: "Здесь пусто. Возвращайся позже"
                     color: Theme.Palette.on_surface_variant
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Tokens.typography.family
                     font.pixelSize: Math.round(13 * root.s)
                 }
 
@@ -426,6 +380,8 @@ Item {
                     clip: true
                     contentHeight: notiList.height
                     boundsBehavior: Flickable.StopAtBounds
+                    // Пока карточку смахивают, список не перехватывает вертикальное движение курсора.
+                    interactive: notiArea.swipeGroup.activeIndex < 0
 
                     Column {
                         id: notiList
@@ -538,7 +494,7 @@ Item {
                             anchors.centerIn: parent
                             text: "‹"
                             color: Theme.Palette.on_surface
-                            font.family: "JetBrainsMono Nerd Font"
+                            font.family: Tokens.typography.family
                             font.pixelSize: Math.round(22 * root.s)
                         }
 
@@ -561,9 +517,11 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: subPage.shown === "wifi" ? "Wi-Fi"
                             : subPage.shown === "note" ? root.noteDate.toLocaleDateString(Qt.locale(), "d MMMM yyyy")
+                            : subPage.shown === "recorder" ? "Запись"
+                            : subPage.shown === "screenshot" ? "Скриншот"
                             : "Bluetooth"
                         color: Theme.Palette.on_surface
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(18 * root.s)
                     }
                 }
@@ -581,7 +539,7 @@ Item {
                         visible: !root.wifiOn
                         text: !root.wifiDevice ? "Нет Wi-Fi адаптера" : "Wi-Fi выключен"
                         color: Theme.Palette.on_surface_variant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(13 * root.s)
                     }
 
@@ -610,7 +568,7 @@ Item {
                                 topPadding: 6 * root.s
                                 text: "Другие сети"
                                 color: Theme.Palette.on_surface
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(16 * root.s)
                             }
 
@@ -629,7 +587,7 @@ Item {
                                 visible: root.wifiOthersCount === 0
                                 text: root.wifiDevice && root.wifiDevice.scannerEnabled ? "Поиск сетей…" : "Нет сетей"
                                 color: Theme.Palette.on_surface_variant
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(12 * root.s)
                             }
                         }
@@ -660,7 +618,7 @@ Item {
                         visible: !root.btOn
                         text: !root.btAdapter ? "Нет адаптера" : "Bluetooth выключен"
                         color: Theme.Palette.on_surface_variant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(13 * root.s)
                     }
 
@@ -689,7 +647,7 @@ Item {
                                 topPadding: 6 * root.s
                                 text: "Другие устройства"
                                 color: Theme.Palette.on_surface
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(16 * root.s)
                             }
 
@@ -708,7 +666,7 @@ Item {
                                 visible: root.btOthersCount === 0
                                 text: root.btAdapter && root.btAdapter.discovering ? "Поиск устройств…" : "Нет устройств"
                                 color: Theme.Palette.on_surface_variant
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(12 * root.s)
                             }
                         }
@@ -725,6 +683,30 @@ Item {
                         onActivated: root.btAdapter.discovering = !root.btAdapter.discovering
                     }
                 }
+                // Настройки записи экрана
+                Loader {
+                    id: recorderPage
+                    anchors.top: subHeader.bottom
+                    anchors.topMargin: 16 * root.s
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    active: subPage.shown === "recorder"
+                    visible: active
+                    sourceComponent: RecorderPage { ctx: root }
+                    onLoaded: item.refresh()
+                }
+
+                // Настройки скриншотов
+                Loader {
+                    anchors.top: subHeader.bottom
+                    anchors.topMargin: 16 * root.s
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    active: subPage.shown === "screenshot"
+                    visible: active
+                    sourceComponent: ScreenshotPage { ctx: root }
+                }
+
                 // День календаря: выбор (напоминание / заметка), затем экран выбранного.
                 // Экраны (ModePane) сменяются плавно: прозрачность и небольшой сдвиг.
                 Item {
@@ -860,7 +842,7 @@ Item {
                                         elide: Text.ElideRight
                                         text: choice.modelData.title
                                         color: Theme.Palette.on_surface
-                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.family: Tokens.typography.family
                                         font.pixelSize: Math.round(14 * root.s)
                                     }
                                     Text {
@@ -868,7 +850,7 @@ Item {
                                         elide: Text.ElideRight
                                         text: choice.modelData.subtitle
                                         color: Theme.Palette.on_surface_variant
-                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.family: Tokens.typography.family
                                         font.pixelSize: Math.round(11 * root.s)
                                     }
                                 }
@@ -923,7 +905,7 @@ Item {
                                     color: Theme.Palette.on_surface
                                     selectionColor: Theme.Palette.primary
                                     selectedTextColor: Theme.Palette.on_primary
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: Tokens.typography.family
                                     font.pixelSize: Math.round(13 * root.s)
                                     onCursorRectangleChanged: {
                                         const r = cursorRectangle;
@@ -932,7 +914,7 @@ Item {
                                         else if (reminderFlick.contentY + reminderFlick.height < r.y + r.height)
                                             reminderFlick.contentY = r.y + r.height - reminderFlick.height;
                                     }
-                                    onTextChanged: if (activeFocus)
+                                    onTextChanged: if (activeFocus && Config.options.sound.interactionSounds)
                                         Quickshell.execDetached(["pw-play", Quickshell.shellPath("assets/sounds/" + Config.options.sound.typeSound)])
 
                                     Text {
@@ -975,7 +957,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "Время напоминания"
                                 color: Theme.Palette.on_surface
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(16 * root.s)
                             }
 
@@ -1007,7 +989,7 @@ Item {
                                     return "Через " + parts.join(", ");
                                 }
                                 color: Theme.Palette.on_surface_variant
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Tokens.typography.family
                                 font.pixelSize: Math.round(11 * root.s)
                             }
                         }
@@ -1069,7 +1051,7 @@ Item {
                                     text: notePage.note ? notePage.note.text : ""
                                     wrapMode: Text.Wrap
                                     color: Theme.Palette.on_surface
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: Tokens.typography.family
                                     font.pixelSize: Math.round(13 * root.s)
                                 }
 
@@ -1082,11 +1064,11 @@ Item {
                                     color: Theme.Palette.on_surface
                                     selectionColor: Theme.Palette.primary
                                     selectedTextColor: Theme.Palette.on_primary
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: Tokens.typography.family
                                     font.pixelSize: Math.round(13 * root.s)
                                     onCursorRectangleChanged: noteFlick.ensureVisible(cursorRectangle)
                                     // Звук печати только от ввода, не от подстановки текста
-                                    onTextChanged: if (activeFocus)
+                                    onTextChanged: if (activeFocus && Config.options.sound.interactionSounds)
                                         Quickshell.execDetached(["pw-play", Quickshell.shellPath("assets/sounds/" + Config.options.sound.typeSound)])
 
                                     Text {
@@ -1115,7 +1097,7 @@ Item {
                                 ? "Изменено " + new Date(notePage.note.edited).toLocaleString(Qt.locale(), "d MMMM yyyy, HH:mm")
                                 : "Новая заметка"
                             color: Theme.Palette.on_surface_variant
-                            font.family: "JetBrainsMono Nerd Font"
+                            font.family: Tokens.typography.family
                             font.pixelSize: Math.round(11 * root.s)
                         }
 
@@ -1145,169 +1127,6 @@ Item {
     }
 
     // ---- Компоненты ----
-
-    // Текст, который при переполнении плавно ездит влево-вправо.
-    component Marquee: Item {
-        id: mq
-        required property real s
-        property string text
-        property color color
-        property int pixelSize: Math.round(13 * s)
-        readonly property real overflow: Math.max(0, label.implicitWidth - width)
-
-        clip: true
-        implicitHeight: label.implicitHeight
-
-        onOverflowChanged: restartTimer.restart()
-        onTextChanged: restartTimer.restart()
-
-        Text {
-            id: label
-            text: mq.text
-            color: mq.color
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: mq.pixelSize
-        }
-
-        // Перезапуск после того, как ширина перестала меняться.
-        Timer {
-            id: restartTimer
-            interval: 300
-            onTriggered: {
-                slide.stop();
-                label.x = 0;
-                if (mq.overflow > 0)
-                    slide.start();
-            }
-        }
-
-        SequentialAnimation {
-            id: slide
-            loops: Animation.Infinite
-            PauseAnimation { duration: 1200 }
-            NumberAnimation {
-                target: label; property: "x"; to: -mq.overflow
-                duration: Math.max(600, mq.overflow * 30 / mq.s); easing.type: Easing.InOutSine
-            }
-            PauseAnimation { duration: 1200 }
-            NumberAnimation {
-                target: label; property: "x"; to: 0
-                duration: Math.max(600, mq.overflow * 30 / mq.s); easing.type: Easing.InOutSine
-            }
-        }
-    }
-
-    // Плитка: основная часть — вкл/выкл, справа — кнопка разворота.
-    component Tile: Item {
-        id: tile
-        required property real s
-        property string title
-        property string subtitle
-        property bool active
-        // Кнопка разворота справа
-        property bool expandable: true
-        readonly property bool down: mainArea.pressed || arrowArea.pressed
-        readonly property color onColor: active ? Theme.Palette.on_primary : Theme.Palette.on_surface
-
-        signal toggled()
-        signal expand()
-
-        height: parent.height
-
-        Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Tokens.radius(16) * tile.s
-            color: tile.active ? Theme.Palette.primary : Theme.Palette.surface_container_high
-            Behavior on color { ColorAnimation { duration: 150 } }
-        }
-
-        Item {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.right: arrow.left
-
-            Rectangle {
-                anchors.fill: parent
-                topLeftRadius: Tokens.radius(16) * tile.s
-                bottomLeftRadius: Tokens.radius(16) * tile.s
-                topRightRadius: tile.expandable ? 0 : Tokens.radius(16) * tile.s
-                bottomRightRadius: tile.expandable ? 0 : Tokens.radius(16) * tile.s
-                color: tile.onColor
-                opacity: mainArea.pressed ? 0.12 : mainArea.containsMouse ? 0.08 : 0
-                Behavior on opacity { NumberAnimation { duration: 120 } }
-            }
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 14 * tile.s
-                anchors.rightMargin: 8 * tile.s
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2 * tile.s
-
-                Marquee {
-                    s: tile.s
-                    width: parent.width
-                    text: tile.title
-                    color: tile.onColor
-                    pixelSize: Math.round(14 * tile.s)
-                }
-                Marquee {
-                    s: tile.s
-                    width: parent.width
-                    text: tile.subtitle
-                    color: tile.onColor
-                    pixelSize: Math.round(11 * tile.s)
-                    opacity: 0.8
-                }
-            }
-
-            MouseArea {
-                id: mainArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: tile.toggled()
-            }
-        }
-
-        Item {
-            id: arrow
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: tile.expandable ? 40 * tile.s : 0
-            visible: tile.expandable
-
-            Rectangle {
-                anchors.fill: parent
-                topRightRadius: Tokens.radius(16) * tile.s
-                bottomRightRadius: Tokens.radius(16) * tile.s
-                color: tile.onColor
-                opacity: arrowArea.pressed ? 0.24 : arrowArea.containsMouse ? 0.18 : 0.12
-                Behavior on opacity { NumberAnimation { duration: 120 } }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: "›"
-                color: tile.onColor
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: Math.round(20 * tile.s)
-            }
-
-            MouseArea {
-                id: arrowArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: tile.expand()
-            }
-        }
-    }
 
     // Ряд кнопок: нажатая расширяется, соседние сжимаются (сумма ширин постоянна).
     component ActionRow: Item {
@@ -1370,7 +1189,7 @@ Item {
                         elide: Text.ElideRight
                         text: btn.modelData
                         color: Theme.Palette.on_secondary_container
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(12 * actionRow.s)
                     }
 
@@ -1430,7 +1249,7 @@ Item {
                         ? "Подключено · " + Math.round(card.device.battery * 100) + "%" : "Подключено")
                     : card.known ? "Сопряжено" : "Новое устройство"
                 color: Theme.Palette.on_surface_variant
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Tokens.typography.family
                 font.pixelSize: Math.round(11 * card.s)
             }
         }
@@ -1556,7 +1375,7 @@ Item {
                             : card.open ? "Открытая" : "Защищённая")
                             + " · " + Math.round(card.network.signalStrength * 100) + "%"
                     color: card.error !== "" ? Theme.Palette.error : Theme.Palette.on_surface_variant
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Tokens.typography.family
                     font.pixelSize: Math.round(11 * card.s)
                 }
             }
@@ -1616,7 +1435,7 @@ Item {
                     color: Theme.Palette.on_surface
                     selectionColor: Theme.Palette.primary
                     selectedTextColor: Theme.Palette.on_primary
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Tokens.typography.family
                     font.pixelSize: Math.round(12 * card.s)
                     onAccepted: card.submit()
                     Keys.onEscapePressed: card.askPsk = false
@@ -1629,7 +1448,7 @@ Item {
                     visible: psk.text === ""
                     text: "Пароль"
                     color: Theme.Palette.on_surface_variant
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Tokens.typography.family
                     font.pixelSize: Math.round(12 * card.s)
                 }
             }
@@ -1646,85 +1465,6 @@ Item {
                     else
                         card.submit();
                 }
-            }
-        }
-    }
-
-    // Ползунок-«таблетка» с подписью и процентом.
-    component Pill: Item {
-        id: pill
-        required property real s
-        property string label
-        property real value: 0
-        property bool available: true
-
-        signal moved(real v)
-        signal scrolled()
-
-        height: 30 * s
-        opacity: available ? 1 : 0.5
-
-        function emitAt(x: real): void {
-            pill.moved(Math.max(0, Math.min(1, x / width)));
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: Theme.Palette.surface_container_high
-        }
-
-        Rectangle {
-            height: parent.height
-            width: height + (parent.width - height) * pill.value
-            radius: height / 2
-            color: Theme.Palette.primary_container
-            Behavior on width {
-                enabled: !area.pressed
-                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: Theme.Palette.on_surface
-            opacity: area.pressed ? 0.12 : area.containsMouse ? 0.06 : 0
-            Behavior on opacity { NumberAnimation { duration: 120 } }
-        }
-
-        Text {
-            anchors.left: parent.left
-            anchors.leftMargin: 12 * pill.s
-            anchors.verticalCenter: parent.verticalCenter
-            text: pill.label
-            color: Theme.Palette.on_primary_container
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: Math.round(13 * pill.s)
-        }
-
-        Text {
-            anchors.right: parent.right
-            anchors.rightMargin: 12 * pill.s
-            anchors.verticalCenter: parent.verticalCenter
-            text: pill.available ? Math.round(pill.value * 100) + "%" : "—"
-            color: Theme.Palette.on_surface_variant
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: Math.round(12 * pill.s)
-        }
-
-        MouseArea {
-            id: area
-            anchors.fill: parent
-            enabled: pill.available
-            hoverEnabled: true
-            preventStealing: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: mouse => pill.emitAt(mouse.x)
-            onPositionChanged: mouse => { if (pressed) pill.emitAt(mouse.x); }
-            onWheel: wheel => {
-                pill.moved(Math.max(0, Math.min(1, pill.value + (wheel.angleDelta.y > 0 ? 0.05 : -0.05))));
-                pill.scrolled();
             }
         }
     }

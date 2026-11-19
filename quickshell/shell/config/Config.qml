@@ -65,6 +65,8 @@ Singleton {
                 property real animationScale: 1.0
                 // Обводка вокруг панелей и полей
                 property bool borders: true
+                // Полупрозрачные карточки настроек с размытием фона под ними
+                property bool cardBlur: false
                 // Непрозрачность фона окон с размытием (0..1)
                 property real surfaceOpacity: 0.6
                 // Сила размытия под окнами (offset блока blur в niri); 0 — без размытия
@@ -175,6 +177,16 @@ Singleton {
                 property bool lyricsScroll: true
                 // Клик по строке — перемотка к ней
                 property bool lyricsSeek: true
+                // Текущая строка: белая и крупнее
+                property bool lyricsHighlight: true
+                // Буквы текущей строки прыгают волной
+                property bool lyricsBounce: true
+                // Свечение букв текущей строки
+                property bool lyricsGlow: true
+                // Цветная аура вокруг текущей строки
+                property bool lyricsAura: true
+                // Размытие всех строк, кроме текущей
+                property bool lyricsBlur: false
             }
 
             property JsonObject workspaces: JsonObject {
@@ -199,17 +211,19 @@ Singleton {
                 property string swipeDirection: "both"
                 // Ширина панели центра, лог. px
                 property int width: 460
+                // Масштаб всех размеров содержимого центра
+                property real scale: 1.15
+                // Высота строки сетки виджетов до масштаба, лог. px
+                property int widgetHeight: 56
                 // Высота панели — доля доступной высоты экрана, 0.4..1
                 property real heightRatio: 1.0
-                property bool showClock: true
+                // Виджеты центра: [{ type, w, h }] (modules/noti-center/widgets);
+                // null — раскладка по умолчанию. Пишет редактор (LayoutState.qml)
+                property var layout: null
+                // Настройки виджета «Часы»
                 property bool showSeconds: true
                 property bool showDate: true
                 property bool showWeekday: true
-                property bool showWifi: true
-                property bool showBluetooth: true
-                property bool showDnd: true
-                property bool showBrightness: true
-                property bool showVolume: true
                 // Максимум строк текста в карточке уведомления
                 property int bodyLines: 4
                 // Кнопки действий в уведомлениях
@@ -233,6 +247,8 @@ Singleton {
             }
 
             property JsonObject sound: JsonObject {
+                // Звуки взаимодействия: печать, клик, окно громкости
+                property bool interactionSounds: true
                 // Звук печати в лаунчере (имя файла из assets/sounds)
                 property string typeSound: "type.wav"
                 // Звук клика (кнопки скриншотов и окна громкости)
@@ -260,6 +276,21 @@ Singleton {
                 property string soundFile: ""
             }
 
+            property JsonObject recorder: JsonObject {
+                // Пресет gpu-screen-recorder: medium | high | very_high | ultra
+                property string quality: "ultra"
+                // Высота видео (0 — исходное разрешение)
+                property int resolution: 0
+                // Запуск из центра уведомлений: весь монитор сразу (иначе — выбор области)
+                property bool fullscreen: false
+                // Не выше частоты монитора
+                property int fps: 60
+                property bool systemAudio: true
+                property bool microphone: false
+                // Уведомление после сохранения записи
+                property bool notify: true
+            }
+
             property JsonObject powerMenu: JsonObject {
                 // Время удержания кнопки до срабатывания, мс
                 property int holdTime: 1200
@@ -272,6 +303,41 @@ Singleton {
                 property int height: 140
                 // Подписи под кнопками
                 property bool labels: false
+            }
+
+            property JsonObject performanceMenu: JsonObject {
+                // Время удержания кнопки до срабатывания, мс
+                property int holdTime: 600
+                property bool showPowerSaver: true
+                property bool showBalanced: true
+                property bool showPerformance: true
+                // Размер содержимого окна, лог. px
+                property int width: 460
+                property int height: 140
+                // Подписи под кнопками
+                property bool labels: true
+            }
+
+            property JsonObject system: JsonObject {
+                // Размер окна «Система», лог. px
+                property int width: 1300
+                property int height: 780
+                // Период опроса датчиков, мс
+                property int interval: 1000
+                // Окно графиков, с
+                property int range: 300
+                // Копить историю, пока окно закрыто
+                property bool backgroundHistory: true
+                // Фон из M3-фигур
+                property bool shapes: true
+                // Затемнение экрана под окном
+                property bool scrim: true
+                // Сглаженные линии графиков
+                property bool smoothGraphs: true
+                // Подсказка со значениями при наведении на график
+                property bool graphTooltip: true
+                // Открытая вкладка: 0 CPU | 1 GPU | 2 RAM | 3 Disk
+                property int tab: 0
             }
 
             property JsonObject launcher: JsonObject {
@@ -292,6 +358,21 @@ Singleton {
                 property bool commandShell: true
                 property bool commandEmoji: true
                 property bool commandWeb: true
+            }
+
+            property JsonObject clipboard: JsonObject {
+                // Максимум записей в истории
+                property int maxItems: 100
+                property bool images: true
+                // Хранить историю между сессиями
+                property bool persist: true
+                // Ссылки на скопированные файлы (text/uri-list)
+                property bool documents: true
+                // Размер окна, лог. px
+                property int width: 600
+                property int height: 500
+                // Записей на одной странице списка
+                property int pageItems: 8
             }
 
             property JsonObject assistant: JsonObject {
@@ -320,9 +401,101 @@ Singleton {
                 property string loadCommand: "/load"
             }
 
+            property JsonObject news: JsonObject {
+                // Готовые темы Google News (id из Bar/news/NewsTopics.js), менять присваиванием
+                property list<string> topics: ["WORLD", "TECHNOLOGY"]
+                // Свои темы — поисковые запросы Google News, менять присваиванием
+                property list<string> queries: []
+                // URL своих RSS/Atom-лент, менять присваиванием
+                property list<string> feeds: []
+                // Период обновления, пока окно открыто, мин
+                property int refreshInterval: 30
+                // Новостей с одной темы или ленты
+                property int maxItems: 20
+                // Край экрана, от которого выезжает окно: "left" | "right"
+                property string side: "right"
+                // Ширина окна, лог. px
+                property int width: 420
+                // Высота окна — доля доступной высоты экрана, 0.4..1
+                property real heightRatio: 1.0
+            }
+
+            property JsonObject weather: JsonObject {
+                // Дней в прогнозе, 1..7
+                property int days: 7
+                // Показывать почасовой прогноз
+                property bool hourly: true
+                // Фон карточки по времени суток и погоде; выкл — цвета палитры
+                property bool dynamicBackground: true
+                // Динамический фон на всё окно, а не только на карточку текущей погоды
+                property bool fullBackground: false
+                // Полупрозрачные карточки с размытием динамического фона (при fullBackground)
+                property bool blur: false
+                // Обводка полупрозрачных карточек (при blur)
+                property bool borders: true
+                // Капли дождя на стекле окна во время дождя (при fullBackground)
+                property bool raindrops: true
+                // Слой капель: "under" — под карточками и текстом, "over" — поверх всего окна
+                property string raindropsLayer: "under"
+                // «Дождь как из ведра!»: очень много стекающих капель при любой погоде (при raindrops)
+                property bool downpour: false
+                // Стиль значков погоды: "material" (цвета палитры) | "colored" (цветные градиенты)
+                property string iconStyle: "material"
+                // Увеличенный масштаб окна (×1.25)
+                property bool zoom: false
+                // Местоположение по IP; выкл — по city
+                property bool autoLocation: true
+                // Город для прогноза при выключенном автоопределении
+                property string city: ""
+                // Период обновления, мин
+                property int refreshInterval: 30
+            }
+
             property JsonObject wallpaper: JsonObject {
                 // Пароль секретных обоев (~/Pictures/.secret_wallpapers), "" — вход закрыт
                 property string password: ""
+            }
+
+            property JsonObject widgets: JsonObject {
+                // Экземпляры виджетов: [{ uid, type, screen, x, y, width, height, settings }].
+                // Пишет только редактор (widgets/WidgetsState.qml), менять присваиванием
+                property var items: []
+                // Сетка редактора и её шаг, лог. px
+                property bool grid: false
+                property int gridSize: 40
+                // Отдельный набор виджетов лок-скрина, формат как у items
+                property var lockItems: []
+                // Набор лок-скрина по умолчанию уже добавлен (WidgetsState.seedLock)
+                property bool lockDefaultsAdded: false
+            }
+
+            property JsonObject lockscreen: JsonObject {
+                property bool enabled: true
+                // Блокировка после бездействия, мин
+                property bool idleLock: false
+                property int idleTimeout: 10
+                // Выкл — разблокировка любой клавишей
+                property bool requirePassword: true
+                // Свой пароль вместо пароля пользователя (PAM)
+                property bool customPasswordEnabled: false
+                property string customPassword: ""
+                property bool showPassword: false
+                // Диаметр точек пароля, лог. px
+                property int dotSize: 12
+                property bool animation: true
+                property bool widgets: true
+                // Фон: скриншот рабочего стола важнее обоев; оба выкл — цвет surface
+                property bool screenshotBackground: true
+                property bool wallpaperBackground: false
+                property bool blur: true
+                property bool hideNotifications: true
+            }
+
+            property JsonObject security: JsonObject {
+                // Скрывать всплывающие уведомления (слой message-card) от записи экрана
+                property bool hidePopups: false
+                // id desktop-файлов, окна которых скрываются от записи экрана
+                property list<string> protectedApps: []
             }
         }
     }

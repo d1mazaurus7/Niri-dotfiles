@@ -220,6 +220,7 @@ Anim.BarDropdown {
                 visible: opacity > 0
                 lyrics: lyricsState
                 player: root.player
+                active: root.visible
             }
 
             Column {
@@ -335,23 +336,37 @@ Anim.BarDropdown {
                     visible: root.cfg.equalizer || root.showGif
                     spacing: Tokens.scaled(14)
 
-                    Row {
-                        id: eqBands
+                    Item {
                         visible: root.cfg.equalizer
-                        spacing: Tokens.scaled(14)
+                        width: eqBands.implicitWidth
+                        height: eqBands.implicitHeight
 
-                        Repeater {
-                            model: root.equalizer.frequencies
+                        Row {
+                            id: eqBands
+                            spacing: Tokens.scaled(14)
 
-                            EqSlider {
-                                required property int modelData
-                                required property int index
-                                value: root.equalizer.gains[index]
-                                from: root.equalizer.minGain
-                                to: root.equalizer.maxGain
-                                label: modelData >= 1000 ? (modelData / 1000) + "k" : String(modelData)
-                                onMoved: v => root.equalizer.setGain(index, v)
+                            Repeater {
+                                id: eqRepeater
+                                model: root.equalizer.frequencies
+
+                                EqSlider {
+                                    required property int modelData
+                                    required property int index
+                                    value: root.equalizer.gains[index]
+                                    from: root.equalizer.minGain
+                                    to: root.equalizer.maxGain
+                                    label: modelData >= 1000 ? (modelData / 1000) + "k" : String(modelData)
+                                    onMoved: v => root.equalizer.setGain(index, v)
+                                }
                             }
+                        }
+
+                        LightningArc {
+                            id: lightning
+                            anchors.fill: parent
+                            anchors.margins: -Tokens.scaled(24)
+                            sliders: eqRepeater
+                            step: Tokens.animationFast / 2.5
                         }
                     }
 
@@ -382,7 +397,7 @@ Anim.BarDropdown {
                     Grid {
                         id: presetGrid
                         width: parent.width
-                        columns: 4
+                        columns: 5
                         spacing: Tokens.scaled(10)
 
                         Repeater {
@@ -420,7 +435,14 @@ Anim.BarDropdown {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.equalizer.loadPreset(chip.modelData)
+                                    onClicked: {
+                                        // Разряд идёт по полосам слева направо, каждая поднимается при его касании
+                                        for (let i = 0; i < eqRepeater.count; i++)
+                                            eqRepeater.itemAt(i)?.charge(Math.round(i * lightning.step));
+                                        lightning.strike();
+                                        root.equalizer.loadPreset(chip.modelData);
+                                        Quickshell.execDetached(["pw-play", Quickshell.shellPath("assets/sounds/swoosh.wav")]);
+                                    }
                                 }
                             }
                         }

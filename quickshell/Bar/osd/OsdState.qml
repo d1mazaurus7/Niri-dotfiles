@@ -17,7 +17,8 @@ Scope {
 
     // Что показать: "volume" | "caps" | "num"
     property string kind: "volume"
-    // Время последнего звука, мс: колесо мыши шлёт изменения пачкой
+    // Время последнего звука, мс. Каждый pw-play — новый поток, его обработка
+    // в wireplumber дорогая: при удержании клавиши/прокрутке щёлкаем не чаще 250 мс
     property double lastSound: 0
 
     signal triggered()
@@ -26,10 +27,11 @@ Scope {
         kind = newKind;
         triggered();
         const now = Date.now();
-        if (now - lastSound < 60)
+        if (now - lastSound < 250)
             return;
         lastSound = now;
-        Quickshell.execDetached(["pw-play", Quickshell.shellPath("assets/sounds/" + Config.options.sound.osdSound)]);
+        if (Config.options.sound.interactionSounds)
+            Quickshell.execDetached(["pw-play", Quickshell.shellPath("assets/sounds/" + Config.options.sound.osdSound)]);
     }
 
     // Без трекера у узла не заполняются данные audio
@@ -52,11 +54,13 @@ Scope {
         running: true
         command: ["bash", "-c", `
             exec 3<> <(:)
-            last=
+            last=; i=0
             while :; do
+                # Список светодиодов перечитываем раз в ~3 с (переподключение клавиатуры)
+                (( i++ % 20 )) || { caps=(/sys/class/leds/*::capslock/brightness); nums=(/sys/class/leds/*::numlock/brightness); }
                 c=0; n=0
-                for f in /sys/class/leds/*::capslock/brightness; do read -r v < "$f" 2>/dev/null && [ "$v" != 0 ] && c=1; done
-                for f in /sys/class/leds/*::numlock/brightness; do read -r v < "$f" 2>/dev/null && [ "$v" != 0 ] && n=1; done
+                for f in "\${caps[@]}"; do read -r v < "$f" 2>/dev/null && [ "$v" != 0 ] && c=1; done
+                for f in "\${nums[@]}"; do read -r v < "$f" 2>/dev/null && [ "$v" != 0 ] && n=1; done
                 [ "$c $n" != "$last" ] && { last="$c $n"; echo "$last"; }
                 read -t 0.15 -u 3
             done`]

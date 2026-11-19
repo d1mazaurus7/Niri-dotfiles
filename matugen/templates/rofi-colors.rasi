@@ -1,5 +1,5 @@
 * {
-  bg: {{colors.on_secondary.default.hex}};
+  bg: {{colors.on_secondary_fixed.default.hex}};
   border: {{colors.primary.default.hex}};
   fg: {{colors.on_background.default.hex}};
   al: {{colors.outline.default.hex}};

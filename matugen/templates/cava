@@ -1,0 +1,17 @@
+[general]
+framerate = 120
+bar_spacing = 1
+sensitivity = 90
+
+[output]
+method = ncurses
+
+[smoothing]
+monstercat = 1
+noise_reduction = 70
+
+[color]
+gradient = 1
+gradient_color_1 = '{{colors.primary.default.hex}}'
+gradient_color_2 = '{{colors.primary_container.default.hex}}'
+gradient_color_3 = '{{colors.secondary.default.hex}}'

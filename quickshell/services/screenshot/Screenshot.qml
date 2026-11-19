@@ -62,13 +62,16 @@ Scope {
         requestClose();
     }
 
+    // Кадр монитора в фокусе и оверлей выделения
+    function capture(): void {
+        if (!active && !grabFrame.running && !focusedOutput.running)
+            focusedOutput.running = true;
+    }
+
     IpcHandler {
         target: "screenshot"
 
-        function capture(): void {
-            if (!root.active && !grabFrame.running)
-                focusedOutput.running = true;
-        }
+        function capture(): void { root.capture(); }
         function close(): void { root.requestClose(); }
     }
 

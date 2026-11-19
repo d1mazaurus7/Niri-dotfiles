@@ -59,7 +59,7 @@ ColumnLayout {
 
     SettingRow {
         title: "Ширина"
-        description: "Ширина панели в пикселях"
+        description: "Ширина панели в пикселях, масштаб не меняет"
 
         SettingSlider {
             from: 360
@@ -69,6 +69,34 @@ ColumnLayout {
             formatValue: v => Math.round(v) + " px"
             onMoved: value => { console.log("NCDBG slider moved", value); page.nc.width = Math.round(value); }
             onValueChanged: console.log("NCDBG slider value", value)
+        }
+    }
+
+    SettingRow {
+        title: "Масштаб"
+        description: "Размер всего содержимого панели, не зависит от ширины"
+
+        SettingSlider {
+            from: 0.7
+            to: 1.6
+            stepSize: 0.05
+            value: page.nc.scale
+            formatValue: v => Math.round(v * 100) + "%"
+            onMoved: value => page.nc.scale = Math.round(value * 100) / 100
+        }
+    }
+
+    SettingRow {
+        title: "Высота виджетов"
+        description: "Высота строки сетки быстрых настроек (до масштаба)"
+
+        SettingSlider {
+            from: 40
+            to: 96
+            stepSize: 2
+            value: page.nc.widgetHeight
+            formatValue: v => Math.round(v) + " px"
+            onMoved: value => page.nc.widgetHeight = Math.round(value)
         }
     }
 
@@ -92,68 +120,24 @@ ColumnLayout {
         description: "Щелчки при нажатии кнопок и плиток"
     }
 
-    Subtitle { text: "Часы" }
-
-    Toggle {
-        key: "showClock"
-        title: "Время"
-        description: "Часы в верхней части панели"
-    }
+    Subtitle { text: "Виджет «Часы»" }
 
     Toggle {
         key: "showSeconds"
-        shown: page.nc.showClock
-        child: true
         title: "Секунды"
         description: "Показывать секунды"
     }
 
     Toggle {
         key: "showDate"
-        shown: page.nc.showClock
-        child: true
         title: "Дата"
         description: "Число, месяц и год под временем"
     }
 
     Toggle {
         key: "showWeekday"
-        shown: page.nc.showClock
-        child: true
         title: "День недели"
         description: "Сокращённый день недели справа"
-    }
-
-    Subtitle { text: "Быстрые настройки" }
-
-    Toggle {
-        key: "showWifi"
-        title: "Wi-Fi"
-        description: "Плитка Wi-Fi со списком сетей"
-    }
-
-    Toggle {
-        key: "showBluetooth"
-        title: "Bluetooth"
-        description: "Плитка Bluetooth со списком устройств"
-    }
-
-    Toggle {
-        key: "showDnd"
-        title: "Не беспокоить"
-        description: "Плитка режима «Не беспокоить»"
-    }
-
-    Toggle {
-        key: "showBrightness"
-        title: "Яркость"
-        description: "Ползунок яркости монитора (ddcutil)"
-    }
-
-    Toggle {
-        key: "showVolume"
-        title: "Громкость"
-        description: "Ползунок громкости звука"
     }
 
     Subtitle { text: "Календарь" }

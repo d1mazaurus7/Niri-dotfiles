@@ -238,6 +238,66 @@ ColumnLayout {
     SettingRow {
         shown: page.player.lyrics
         child: true
+        title: "Выделение строки"
+        description: "Текущая строка белая и крупнее"
+
+        SettingSwitch {
+            checked: page.player.lyricsHighlight
+            onToggled: checked => page.player.lyricsHighlight = checked
+        }
+    }
+
+    SettingRow {
+        shown: page.player.lyrics
+        child: true
+        title: "Прыгающие буквы"
+        description: "Буквы текущей строки подпрыгивают волной"
+
+        SettingSwitch {
+            checked: page.player.lyricsBounce
+            onToggled: checked => page.player.lyricsBounce = checked
+        }
+    }
+
+    SettingRow {
+        shown: page.player.lyrics
+        child: true
+        title: "Свечение букв"
+        description: "Свечение вокруг букв текущей строки"
+
+        SettingSwitch {
+            checked: page.player.lyricsGlow
+            onToggled: checked => page.player.lyricsGlow = checked
+        }
+    }
+
+    SettingRow {
+        shown: page.player.lyrics
+        child: true
+        title: "Аура"
+        description: "Мягкая цветная аура вокруг текущей строки"
+
+        SettingSwitch {
+            checked: page.player.lyricsAura
+            onToggled: checked => page.player.lyricsAura = checked
+        }
+    }
+
+    SettingRow {
+        shown: page.player.lyrics
+        child: true
+        title: "Блюрить текст песни"
+        description: "Размывать все строки, кроме текущей"
+
+        SettingSwitch {
+            checked: page.player.lyricsBlur
+            onToggled: checked => page.player.lyricsBlur = checked
+        }
+    }
+
+    SettingRow {
+        shown: page.player.lyrics
+        child: true
         title: "Кэш текстов"
         description: "Удалить сохранённые тексты песен"
 

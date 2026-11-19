@@ -13,9 +13,18 @@ import "../settings" as Settings
 import "../modules/snow" as Snow
 import "../Bar/stopwatch" as Stopwatch
 import "../services/screenshot" as Screenshot
+import "../services/recorder" as Recorder
+import "../services/niri" as Niri
 import "../Bar/assistant" as Assistant
+import "../Bar/news" as News
+import "../Bar/weather" as Weather
 import "../Bar/osd" as Osd
 import "../Bar/power" as Power
+import "../Bar/performance" as Performance
+import "../Bar/clipboard" as Clipboard
+import "../widgets" as Widgets
+import "../Bar/lockscreen" as Lockscreen
+import "../Bar/system" as SystemInfo
 
 Item {
     id: shellRoot
@@ -25,11 +34,17 @@ Item {
     // Окно настроек: одно на всю оболочку
     Settings.SettingsWindow { id: settingsWindow }
     Settings.SettingsIpc { window: settingsWindow }
+    // Буфер обмена: qs ipc call clipboard toggle
+    Clipboard.Clipboard {}
     MusicEqualizer.MusicPlayerIpc { id: playerIpc }
     // Секундомер: qs ipc call stopwatch toggle
     Stopwatch.Stopwatch { id: stopwatchWindow }
     // Скриншоты: qs ipc call screenshot capture
-    Screenshot.Screenshot {}
+    Screenshot.Screenshot { id: screenshot }
+    // Запись экрана: qs ipc call recorder toggle|start|stop|pause
+    Recorder.Recorder { id: recorder }
+    // Защита от записи экрана: правила в niri/config/layer-rules.kdl
+    Niri.NiriScreencastGuard {}
     // Чат с ИИ: qs ipc call assistant toggle
     Assistant.AssistantState { id: assistantState }
     Assistant.AssistantWindow { id: assistantWindow; chat: assistantState }
@@ -48,6 +63,26 @@ Item {
             assistantWindow.open = true;
         }
     }
+    // Лента новостей: qs ipc call news toggle; грузит новости, только пока окно открыто
+    News.NewsState { id: newsState; active: newsWindow.open }
+    News.NewsWindow { id: newsWindow; news: newsState }
+    News.NewsIpc {
+        onRequested: (action, output) => {
+            if (action === "close" || (action === "toggle" && newsWindow.open)) {
+                newsWindow.open = false;
+                return;
+            }
+            // Монитор меняется только у скрытого окна
+            if (!newsWindow.visible) {
+                for (let i = 0; i < Quickshell.screens.length; i++)
+                    if (Quickshell.screens[i].name === output)
+                        newsWindow.screen = Quickshell.screens[i];
+            }
+            newsWindow.open = true;
+        }
+    }
+    // Погода: qs ipc call weather toggle|open|close|refresh
+    Weather.WeatherIpc {}
     // Эквалайзер EasyEffects: одно состояние на все экраны
     MusicEqualizer.EqualizerState { id: equalizerState }
     // Сервер уведомлений и всплывающие уведомления
@@ -62,6 +97,25 @@ Item {
     Osd.Osd {}
     // Меню питания: qs ipc call power toggle
     Power.PowerMenu {}
+    // Профили производительности: qs ipc call performance toggle
+    Performance.PerformanceMenu {}
+    // Окно «Система»: qs ipc call system toggle; история копится и при закрытом окне (по настройке)
+    SystemInfo.SystemState {
+        id: systemState
+        active: systemWindow.visible || Config.options.system.backgroundHistory
+        detailed: systemWindow.visible
+        interval: Config.options.system.interval
+    }
+    SystemInfo.SystemWindow { id: systemWindow; sys: systemState }
+    // Виджеты рабочего стола: qs ipc call widgets toggle
+    Widgets.Widgets { id: desktopWidgets; equalizer: equalizerState; lock: lockState }
+    // Лок-скрин: qs ipc call lockscreen lock
+    Lockscreen.LockState { id: lockState }
+    Lockscreen.Lockscreen {
+        lock: lockState
+        widgets: desktopWidgets.lockStore
+        notifications: notificationState
+    }
     // Окно Bar для каждого экрана
     Variants {
         model: Quickshell.screens
@@ -76,17 +130,6 @@ Item {
             implicitHeight: barHeight + BarStyle.marginTop
             color: "transparent"
             WlrLayershell.namespace: "qs:bar"
-            // Размытие под фоном панели (ext-background-effect-v1); barContent двигается
-            // при автоскрытии, поэтому регион привязан к нему, а не к фону
-            BackgroundEffect.blurRegion: BarStyle.filled ? barBlurRegion : null
-            Region {
-                id: barBlurRegion
-                item: barContent
-                topLeftRadius: barBackground.topLeftRadius
-                topRightRadius: barBackground.topRightRadius
-                bottomLeftRadius: barBackground.bottomLeftRadius
-                bottomRightRadius: barBackground.bottomRightRadius
-            }
 
             // Привязка к экрану
             screen: modelData
@@ -117,6 +160,14 @@ Item {
                     musicEqualizer.open = !musicEqualizer.open;
             }
 
+            // Лента новостей открывается на экране этого бара
+            readonly property var news: newsWindow
+            function toggleNews() {
+                if (!newsWindow.visible)
+                    newsWindow.screen = modelData;
+                newsWindow.open = !newsWindow.open;
+            }
+
             // Пока плеер виден (включая анимацию закрытия), бар держит клавиатуру — иначе Esc
             // не доходит до плеера, а ранний сброс фокуса снимает захват и окно пропадает рывком.
             // То же для центра уведомлений: без этого поля ввода в нём не получают клавиши
@@ -145,6 +196,25 @@ Item {
                 HoverHandler { id: barHover }
             }
 
+            // Зона островка записи у правого края бара: наведение выдвигает островок
+            Item {
+                id: recZone
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: recIsland.implicitWidth
+                visible: recorder.recording && recorder.output === barWindow.modelData.name
+                HoverHandler { id: recZoneHover }
+
+                Recorder.RecordingIsland {
+                    id: recIsland
+                    service: recorder
+                    barWindow: barWindow
+                    zoneHovered: recZoneHover.hovered && recZone.visible
+                    blocked: notiCenter.shown || recorder.output !== barWindow.modelData.name
+                }
+            }
+
             // Бар целиком; при автоскрытии уезжает вверх
             Item {
                 id: barContent
@@ -163,10 +233,11 @@ Item {
                     topLeftRadius: BarStyle.roundTop ? BarStyle.radius : 0
                     topRightRadius: BarStyle.roundTop ? BarStyle.radius : 0
                     // Под открытым центром уведомлений бар переходит в панель без скругления
-                    bottomRightRadius: notiCenter.shown ? 0 : BarStyle.radius
+                    bottomRightRadius: notiCenter.shown || recIsland.visible ? 0 : BarStyle.radius
                     width: parent.width
                     height: parent.height
-                    color: Qt.alpha(Theme.Palette.background, Tokens.surfaceOpacity)
+                    // Однотонный фон без размытия
+                    color: Theme.Palette.background
                 }
 
                 // Окно для выбора обоев: только на первом экране, чтобы IPC "wallpaper" был один
@@ -190,6 +261,8 @@ Item {
                     openOutput: shellRoot.notiCenterOutput
                     ipcEnabled: barWindow.modelData === Quickshell.screens[0]
                     notifications: notificationState
+                    recorderService: recorder
+                    screenshotService: screenshot
                     onOpenOutputRequested: name => shellRoot.notiCenterOutput = name
                 }
 

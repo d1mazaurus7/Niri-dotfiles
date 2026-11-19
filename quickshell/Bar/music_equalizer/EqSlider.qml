@@ -14,11 +14,52 @@ Item {
 
     signal moved(real value)
 
-    // Отображаемое значение: при смене пресета плавно доезжает, при перетаскивании — без задержки
+    // Отображаемое значение: плавно доезжает, при перетаскивании — без задержки
     property real shown: value
     Behavior on shown {
-        enabled: !area.pressed
+        enabled: !area.pressed && !root.charging
         NumberAnimation { duration: Tokens.animationSlow; easing.type: Easing.OutCubic }
+    }
+    onValueChanged: if (!charging) shown = value
+
+    // «Разряд» при смене пресета: вспышка точки и подъём к новому значению после задержки
+    property bool charging: false
+    property real glow: 0
+    function charge(delay: int) {
+        surge.stop();
+        charging = true;
+        chargeTimer.interval = delay;
+        chargeTimer.restart();
+    }
+    function stopCharge() {
+        chargeTimer.stop();
+        surge.stop();
+        glow = 0;
+        charging = false;
+    }
+    Timer {
+        id: chargeTimer
+        onTriggered: {
+            rise.to = root.value;
+            surge.start();
+        }
+    }
+    ParallelAnimation {
+        id: surge
+        NumberAnimation {
+            id: rise
+            target: root; property: "shown"
+            duration: Tokens.animationSlow * 1.5
+            easing.type: Easing.OutBack; easing.overshoot: 1.4
+        }
+        SequentialAnimation {
+            NumberAnimation { target: root; property: "glow"; to: 1; duration: Tokens.animationFast / 2; easing.type: Easing.OutQuad }
+            NumberAnimation { target: root; property: "glow"; to: 0; duration: Tokens.animationSlow * 1.5; easing.type: Easing.OutCubic }
+        }
+        onFinished: {
+            root.charging = false;
+            root.shown = root.value;
+        }
     }
 
     readonly property real knobSize: Tokens.scaled(18)
@@ -62,6 +103,25 @@ Item {
         height: Math.abs(root.yOf(0) - root.yOf(root.shown))
         radius: width / 2
         color: Theme.Palette.primary
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: Theme.Palette.primary_fixed
+            opacity: root.glow
+        }
+    }
+
+    // Искра вокруг ручки
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.yOf(root.shown) - height / 2
+        width: root.knobSize * (1 + root.glow * 1.4)
+        height: width
+        radius: width / 2
+        color: Theme.Palette.primary
+        opacity: root.glow * 0.45
+        visible: root.glow > 0
     }
 
     // Ручка
@@ -102,7 +162,10 @@ Item {
             const v = Math.round((root.to - t * (root.to - root.from)) / root.step) * root.step;
             if (v !== root.value) root.moved(v);
         }
-        onPressed: mouse => update(mouse.y)
+        onPressed: mouse => {
+            root.stopCharge();
+            update(mouse.y);
+        }
         onPositionChanged: mouse => { if (pressed) update(mouse.y); }
         // Двойной клик — сброс полосы в 0
         onDoubleClicked: root.moved(0)

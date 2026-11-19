@@ -75,7 +75,8 @@ Column {
                 opacity: PathView.itemOpacity ?? 1
                 color: PathView.isCurrentItem ? Theme.Palette.primary : Theme.Palette.on_surface
                 Behavior on color { ColorAnimation { duration: Tokens.animationFast } }
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Tokens.typography.family
+                font.features: { "tnum": 1 }
                 font.pixelSize: Math.round(44 * drum.s)
                 font.weight: Font.Medium
                 transform: Rotation {

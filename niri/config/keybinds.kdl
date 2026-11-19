@@ -26,8 +26,13 @@ binds {
     Print           hotkey-overlay-title="сделать скриншот"         { spawn "qs" "ipc" "call" "screenshot" "capture"; }
     Mod+Shift+S     hotkey-overlay-title="открыть секундомер"       { spawn "qs" "ipc" "call" "stopwatch" "toggle"; }
     Mod+Shift+N     hotkey-overlay-title="открыть мини-плеер"       { spawn "qs" "ipc" "call" "music" "toggle"; }
-    Mod+Escape      hotkey-overlay-title="открыть мини-плеер"       { spawn "qs" "ipc" "call" "power" "toggle"; }
-
+    Mod+Escape      hotkey-overlay-title="открыть управление питанием"{ spawn "qs" "ipc" "call" "power" "toggle"; }
+    Mod+Shift+W     allow-when-locked=true  hotkey-overlay-title="открыть редактор виджетов"{ spawn "qs" "ipc" "call" "widgets" "toggle"; }
+    Mod+v           hotkey-overlay-title="открыть буфер обмена"     { spawn "qs" "ipc" "call" "clipboard" "toggle"; }
+    Mod+Shift+P     hotkey-overlay-title="открыть профили производительности"{ spawn "qs" "ipc" "call" "performance" "toggle";}
+    Mod+L           hotkey-overlay-title="лок-скрин"                { spawn "qs" "ipc" "call" "lockscreen" "lock"; }
+    Mod+Shift+R     hotkey-overlay-title="запись экрана"            { spawn "qs" "ipc" "call" "recorder" "toggle"; }
+    Mod+Shift+C hotkey-overlay-title="Система" { spawn "qs" "ipc" "call" "system" "toggle"; }
     // Sound
     XF86AudioLowerVolume   hotkey-overlay-title="понизить громкость" { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02-"; }
     XF86AudioRaiseVolume   hotkey-overlay-title="повысить громкость" { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02+"; }

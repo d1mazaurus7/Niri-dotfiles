@@ -40,7 +40,13 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: content.implicitHeight + Tokens.spacingLargeV * 2
     radius: Tokens.radiusLarge
-    color: colors.surface_container
+    // При cardBlur — прозрачная, фон даёт CardBackdrop (размытие + тонировка);
+    // вне окна настроек — просто полупрозрачная
+    color: backdrop.active ? "transparent"
+         : Tokens.appearance.cardBlur ? Qt.alpha(colors.surface_container, 0.45) : colors.surface_container
+    Behavior on color { ColorAnimation { duration: Tokens.animationMedium } }
+
+    CardBackdrop { id: backdrop }
 
     ColumnLayout {
         id: content
@@ -80,12 +86,15 @@ Rectangle {
 
             SettingButton {
                 visible: !root.editing && root.apps.length > 0
+                variant: "outlined"
+                icon: root.showApps ? "expand_less" : "expand_more"
                 text: root.showApps ? "Свернуть" : "Показать (" + root.apps.length + ")"
                 onClicked: root.showApps = !root.showApps
             }
 
             SettingButton {
                 visible: !root.editing
+                icon: "edit"
                 text: "Изменить"
                 onClicked: {
                     root.draft = root.apps.slice();
@@ -96,12 +105,15 @@ Rectangle {
 
             SettingButton {
                 visible: root.editing
+                variant: "text"
                 text: "Отмена"
                 onClicked: root.editing = false
             }
 
             SettingButton {
                 visible: root.editing
+                variant: "filled"
+                icon: "check"
                 text: "Применить"
                 onClicked: {
                     root.edited(root.draft);
@@ -111,6 +123,8 @@ Rectangle {
 
             SettingButton {
                 visible: root.removable && !root.editing
+                variant: "outlined"
+                icon: "delete"
                 text: "Удалить"
                 onClicked: root.removeRequested()
             }
@@ -119,10 +133,13 @@ Rectangle {
         // Чипы выбранных приложений: раскрываются вниз
         Item {
             Layout.fillWidth: true
-            implicitHeight: !root.editing && root.showApps && root.apps.length > 0 ? chips.implicitHeight : 0
+            readonly property bool open: !root.editing && root.showApps && root.apps.length > 0
+            implicitHeight: open ? chips.implicitHeight : 0
+            opacity: open ? 1 : 0
             visible: implicitHeight > 0
             clip: true
             Behavior on implicitHeight { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: Tokens.animationMedium } }
 
             Flow {
                 id: chips
@@ -149,28 +166,64 @@ Rectangle {
         Item {
             Layout.fillWidth: true
             implicitHeight: root.editing ? editor.implicitHeight : 0
+            opacity: root.editing ? 1 : 0
             visible: implicitHeight > 0
             clip: true
             Behavior on implicitHeight { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: Tokens.animationMedium } }
 
             ColumnLayout {
                 id: editor
                 width: parent.width
                 spacing: Tokens.spacingSmallV
 
+                // M3 поиск: иконка, поле, кнопка очистки
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: filter.implicitHeight + Tokens.spacingMediumV * 2
-                    radius: height / 2
+                    implicitHeight: Tokens.scaled(44)
+                    radius: filter.activeFocus ? Tokens.radiusLarge : height / 2
                     color: root.colors.surface_container_highest
-                    border.width: filter.activeFocus ? 1 : 0
+                    border.width: filter.activeFocus ? 2 : 0
                     border.color: root.colors.primary
+                    Behavior on radius { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+
+                    // State layer
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: root.colors.on_surface
+                        opacity: searchArea.containsMouse && !filter.activeFocus ? 0.08 : 0
+                        Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+                    }
+
+                    MouseArea {
+                        id: searchArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.IBeamCursor
+                        onClicked: filter.forceActiveFocus()
+                    }
+
+                    Text {
+                        id: searchIcon
+                        anchors.left: parent.left
+                        anchors.leftMargin: Tokens.spacingLarge
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "search"
+                        color: filter.activeFocus ? root.colors.primary : root.colors.on_surface_variant
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: Tokens.scaled(20)
+                        Behavior on color { ColorAnimation { duration: Tokens.animationMedium } }
+                    }
 
                     TextInput {
                         id: filter
-                        anchors.fill: parent
-                        anchors.leftMargin: Tokens.spacingLarge
-                        anchors.rightMargin: Tokens.spacingLarge
+                        anchors.left: searchIcon.right
+                        anchors.right: clearBtn.left
+                        anchors.leftMargin: Tokens.spacingMedium
+                        anchors.rightMargin: Tokens.spacingSmall
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
                         color: root.colors.on_surface
@@ -180,10 +233,53 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            visible: !filter.text
                             text: "Поиск..."
                             color: root.colors.on_surface_variant
                             font: Tokens.fontMedium
+                            opacity: filter.text === "" ? 1 : 0
+                            visible: opacity > 0
+                            Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+                        }
+                    }
+
+                    Rectangle {
+                        id: clearBtn
+                        readonly property bool shown: filter.text !== ""
+                        anchors.right: parent.right
+                        anchors.rightMargin: Tokens.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Tokens.scaled(32)
+                        height: width
+                        radius: width / 2
+                        color: clearArea.pressed ? Qt.alpha(root.colors.on_surface, 0.10)
+                             : clearArea.containsMouse ? Qt.alpha(root.colors.on_surface, 0.08)
+                             : "transparent"
+                        opacity: shown ? 1 : 0
+                        scale: shown ? 1 : 0.5
+                        visible: opacity > 0
+                        Behavior on color { ColorAnimation { duration: Tokens.animationFast } }
+                        Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+                        Behavior on scale { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutBack } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "close"
+                            color: root.colors.on_surface_variant
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: Tokens.scaled(18)
+                            rotation: clearArea.containsMouse ? 90 : 0
+                            Behavior on rotation { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+                        }
+
+                        MouseArea {
+                            id: clearArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                filter.text = "";
+                                filter.forceActiveFocus();
+                            }
                         }
                     }
                 }

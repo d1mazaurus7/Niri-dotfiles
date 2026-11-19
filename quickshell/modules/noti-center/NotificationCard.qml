@@ -1,20 +1,20 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import "../../theme" as Theme
 import "../../shell/theme"
 import "../../shell/config"
 
-// Карточка уведомления: иконка, приложение, текст, кнопки действий.
-// Смахивается перетаскиванием с зажатой ЛКМ (по настройкам notiCenter):
-// упирается в край окна и «втягивается» в него, соседи немного тянутся следом.
+// Карточка уведомления (MD3): аватар, заголовок, текст, действия.
+// Смахивается перетаскиванием; соседей двигает move-транзиция родительского Column.
 Item {
     id: card
 
     required property var notification
     property real s: 1
-    // Всплывающая карточка: край экрана "right" | "left", из которого она выезжает; "" — в центре.
+    // Всплывающая карточка: край экрана "right" | "left"; "" — в центре.
     property string edge: ""
     property real earRadius: 10 * s
     // Автоскрытие всплывающей карточки, мс; 0 — не скрывать.
@@ -26,30 +26,30 @@ Item {
     readonly property var cfg: Config.options.notiCenter
     readonly property bool canRight: cfg.swipe && cfg.swipeDirection !== "left"
     readonly property bool canLeft: cfg.swipe && cfg.swipeDirection !== "right"
+    readonly property bool critical: !!notification && notification.urgency === NotificationUrgency.Critical
     readonly property var buttons: notification ? notification.actions.filter(a => a.identifier !== "default") : []
     readonly property var defaultAction: notification ? (notification.actions.find(a => a.identifier === "default") ?? null) : null
-    readonly property string iconSource: {
-        const n = notification;
-        if (!n)
-            return "";
-        if (n.image !== "")
-            return n.image;
-        const icon = n.appIcon !== "" ? n.appIcon : (DesktopEntries.byId(n.desktopEntry)?.icon ?? "");
+
+    function resolveIcon(icon: string): string {
         if (icon === "")
             return "";
         if (icon.startsWith("/"))
             return "file://" + icon;
         return icon.includes("://") ? icon : Quickshell.iconPath(icon, true);
     }
+    readonly property string appIconSource: notification
+        ? resolveIcon(notification.appIcon !== "" ? notification.appIcon : (DesktopEntries.byId(notification.desktopEntry)?.icon ?? ""))
+        : ""
+    readonly property bool hasImage: !!notification && notification.image !== ""
+    readonly property string iconSource: hasImage ? notification.image : appIconSource
 
-    // Развёрнуто ли полное содержимое (заголовок и текст без обрезки).
     property bool expanded: false
+    property bool ready: false
 
     property real reveal: edge === "" ? 1 : 0
-    property real collapse: 1
+    property real pop: 0
     property real dx: 0
     property real dragBase: 0
-    // Сосед смахиваемой карточки тянется за ней, пока не «отлипнет».
     readonly property bool attached: !!group && group.activeIndex >= 0 && !group.detached
         && Math.abs(group.activeIndex - listIndex) === 1
     readonly property real pullTarget: attached ? group.offset * 0.25 : 0
@@ -63,19 +63,22 @@ Item {
         }
     }
 
-    // Итоговый сдвиг: на столько карточка вдавлена в край окна.
     readonly property real v: Math.max(-width, Math.min(width, dx + pull))
     readonly property real r: Tokens.radius(16) * s
-    // Скругление со стороны края сглаживается — карточка прилипает к нему.
     readonly property real stickR: r * Math.max(0, 1 - Math.abs(v) / (16 * s))
+    readonly property real pad: 14 * s
+    // Целевая высота меняется скачком (один move у соседей), фон догоняет анимацией.
+    readonly property real fullHeight: Math.max(col.implicitHeight, 40 * s) + pad * 2
 
-    // Всплывающая карточка спрятана — владелец убирает её из списка.
     signal finished()
 
     width: parent ? parent.width : 0
-    height: bg.height * collapse
+    height: fullHeight
 
     function swipeOut(dir: int): void {
+        if (swipeAnim.running)
+            return;
+        snapBack.stop();
         swipeAnim.to = dir * width;
         swipeAnim.start();
     }
@@ -83,6 +86,13 @@ Item {
     function hide(): void {
         if (!swipeAnim.running && !hideAnim.running)
             hideAnim.start();
+    }
+
+    function close(): void {
+        if (edge !== "")
+            hide();
+        else
+            swipeOut(canLeft && !canRight ? -1 : 1);
     }
 
     function track(t: real): void {
@@ -104,7 +114,12 @@ Item {
             snapBack.start();
     }
 
-    Component.onCompleted: if (edge !== "") showAnim.start()
+    Component.onCompleted: {
+        ready = true;
+        popAnim.start();
+        if (edge !== "")
+            showAnim.start();
+    }
     Component.onDestruction: if (group && group.activeIndex === listIndex) group.activeIndex = -1
 
     NumberAnimation {
@@ -121,6 +136,12 @@ Item {
     }
 
     NumberAnimation {
+        id: popAnim
+        target: card; property: "pop"; from: 0; to: 1
+        duration: Tokens.animationSlow; easing.type: Easing.OutBack; easing.overshoot: 2
+    }
+
+    NumberAnimation {
         id: snapBack
         target: card; property: "dx"; to: 0
         duration: Tokens.animationMedium; easing.type: Easing.OutCubic
@@ -130,14 +151,12 @@ Item {
         id: swipeAnim
         property real to: 0
         NumberAnimation { target: card; property: "dx"; to: swipeAnim.to; duration: Tokens.animationMedium; easing.type: Easing.OutCubic }
-        NumberAnimation { target: card; property: "collapse"; to: 0; duration: Tokens.animationMedium; easing.type: Easing.OutCubic }
         ScriptAction { script: card.notification.dismiss() }
     }
 
     SequentialAnimation {
         id: hideAnim
         NumberAnimation { target: card; property: "reveal"; to: 0; duration: Tokens.animationSlow; easing.type: Easing.InCubic }
-        NumberAnimation { target: card; property: "collapse"; to: 0; duration: Tokens.animationMedium; easing.type: Easing.OutCubic }
         ScriptAction { script: card.finished() }
     }
 
@@ -156,7 +175,6 @@ Item {
 
         HoverHandler { id: hover }
 
-        // Отпускание и отмена захвата оба снимают active — карточка не зависает.
         DragHandler {
             id: drag
             target: null
@@ -169,8 +187,10 @@ Item {
                 if (active) {
                     snapBack.stop();
                     card.dragBase = card.dx;
-                    if (card.group)
+                    if (card.group) {
                         card.group.detached = false;
+                        card.group.activeIndex = card.listIndex;
+                    }
                 } else {
                     card.release();
                 }
@@ -184,20 +204,23 @@ Item {
             onTapped: card.defaultAction.invoke()
         }
 
-        // Тело карточки: сжимается со стороны смахивания, содержимое уезжает в край.
         Rectangle {
             id: bg
             x: Math.max(0, card.v)
             width: card.width - Math.abs(card.v)
-            height: Math.max(col.implicitHeight, 40 * card.s) + 14 * card.s * 2
+            height: card.fullHeight
             clip: true
-            Behavior on height { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+            Behavior on height {
+                enabled: card.ready
+                NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic }
+            }
             topRightRadius: card.edge === "right" ? 0 : card.v > 0 ? card.stickR : card.r
             bottomRightRadius: topRightRadius
             topLeftRadius: card.edge === "left" ? 0 : card.v < 0 ? card.stickR : card.r
             bottomLeftRadius: topLeftRadius
             color: card.edge !== "" ? Theme.Palette.background : Theme.Palette.surface_container_high
 
+            // State layer MD3.
             Rectangle {
                 anchors.fill: parent
                 topLeftRadius: bg.topLeftRadius
@@ -205,7 +228,7 @@ Item {
                 bottomLeftRadius: bg.bottomLeftRadius
                 bottomRightRadius: bg.bottomRightRadius
                 color: Theme.Palette.on_surface
-                opacity: drag.active ? 0.08 : hover.hovered ? 0.04 : 0
+                opacity: drag.active ? 0.1 : hover.hovered ? 0.05 : 0
                 Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
             }
 
@@ -214,53 +237,189 @@ Item {
                 width: card.width
                 height: parent.height
 
-                // Иконка приложения; без неё — первая буква названия.
-                Rectangle {
-                    id: iconBox
-                    x: 14 * card.s
-                    y: 14 * card.s
+                // Аватар: изображение уведомления или иконка приложения; без них — буква.
+                Item {
+                    id: avatar
+                    x: card.pad
+                    y: card.pad
                     width: 40 * card.s
                     height: width
-                    radius: Tokens.radius(12) * card.s
-                    color: Theme.Palette.secondary_container
-                    clip: true
+                    scale: (0.5 + 0.5 * card.pop) * (hover.hovered ? 1.06 : 1)
+                    Behavior on scale { enabled: !popAnim.running; NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
 
-                    Text {
-                        anchors.centerIn: parent
-                        visible: icon.status !== Image.Ready
-                        text: card.notification ? (card.notification.appName || "?").charAt(0).toUpperCase() : ""
-                        color: Theme.Palette.on_secondary_container
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: Math.round(18 * card.s)
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: card.hasImage ? Tokens.radius(12) * card.s : width / 2
+                        color: card.critical ? Theme.Palette.error_container : Theme.Palette.primary_container
+                        clip: true
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: icon.status !== Image.Ready
+                            text: card.notification ? (card.notification.appName || "?").charAt(0).toUpperCase() : ""
+                            color: card.critical ? Theme.Palette.on_error_container : Theme.Palette.on_primary_container
+                            font.family: Tokens.typography.family
+                            font.pixelSize: Math.round(18 * card.s)
+                            font.weight: Font.Medium
+                        }
+
+                        Image {
+                            id: icon
+                            anchors.fill: parent
+                            anchors.margins: card.hasImage ? 0 : 6 * card.s
+                            source: card.iconSource
+                            sourceSize.width: 80 * card.s
+                            sourceSize.height: 80 * card.s
+                            fillMode: card.hasImage ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+                            asynchronous: true
+                        }
                     }
 
-                    Image {
-                        id: icon
-                        anchors.fill: parent
-                        source: card.iconSource
-                        sourceSize.width: width * 2
-                        sourceSize.height: height * 2
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
+                    // Значок приложения поверх картинки уведомления.
+                    Rectangle {
+                        visible: card.hasImage && card.appIconSource !== "" && badgeIcon.status === Image.Ready
+                        x: parent.width - width * 0.75
+                        y: parent.height - height * 0.75
+                        width: 18 * card.s
+                        height: width
+                        radius: width / 2
+                        color: bg.color
+                        scale: card.pop
+
+                        Image {
+                            id: badgeIcon
+                            anchors.fill: parent
+                            anchors.margins: 2 * card.s
+                            source: card.hasImage ? card.appIconSource : ""
+                            sourceSize.width: 36 * card.s
+                            sourceSize.height: 36 * card.s
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                        }
                     }
                 }
 
                 Column {
                     id: col
-                    anchors.left: iconBox.right
+                    anchors.left: avatar.right
                     anchors.leftMargin: 12 * card.s
                     anchors.right: parent.right
-                    anchors.rightMargin: 14 * card.s
-                    y: 14 * card.s
-                    spacing: 3 * card.s
+                    anchors.rightMargin: card.pad
+                    y: card.pad - 4 * card.s
+                    spacing: 2 * card.s
 
-                    Text {
-                        width: parent.width - (expandBtn.visible ? expandBtn.width + 4 * card.s : 0)
-                        text: card.notification ? card.notification.appName || "Уведомление" : ""
-                        elide: Text.ElideRight
-                        color: Theme.Palette.on_surface_variant
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: Math.round(11 * card.s)
+                    // Шапка: приложение, срочность, развернуть, закрыть.
+                    Item {
+                        width: parent.width
+                        height: 24 * card.s
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - actions.width - 4 * card.s
+                            spacing: 6 * card.s
+
+                            Text {
+                                id: urgentIcon
+                                visible: card.critical
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ""
+                                color: Theme.Palette.error
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: Math.round(11 * card.s)
+                                scale: card.pop
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - (urgentIcon.visible ? urgentIcon.width + parent.spacing : 0)
+                                text: card.notification ? card.notification.appName || "Уведомление" : ""
+                                elide: Text.ElideRight
+                                color: card.critical ? Theme.Palette.error : Theme.Palette.on_surface_variant
+                                font.family: Tokens.typography.family
+                                font.pixelSize: Math.round(11 * card.s)
+                                font.weight: Font.Medium
+                                font.letterSpacing: 0.4 * card.s
+                            }
+                        }
+
+                        Row {
+                            id: actions
+                            anchors.right: parent.right
+                            anchors.rightMargin: -6 * card.s
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 0
+
+                            Item {
+                                visible: card.expanded || summaryText.truncated || bodyText.truncated
+                                width: 24 * card.s
+                                height: width
+                                
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: Theme.Palette.on_surface
+                                    opacity: expandArea.pressed ? 0.12 : expandArea.containsMouse ? 0.08 : 0
+                                    Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf078"
+                                    color: expandArea.containsMouse ? Theme.Palette.on_surface : Theme.Palette.on_surface_variant
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: Math.round(11 * card.s)
+                                    rotation: card.expanded ? 180 : 0
+                                    scale: expandArea.pressed ? 0.8 : 1
+                                    Behavior on rotation { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+                                    Behavior on scale { NumberAnimation { duration: Tokens.animationFast; easing.type: Easing.OutCubic } }
+                                    Behavior on color { ColorAnimation { duration: Tokens.animationFast } }
+                                }
+
+                                MouseArea {
+                                    id: expandArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: card.expanded = !card.expanded
+                                }
+                            }
+
+                            Item {
+                                width: 24 * card.s
+                                height: width
+                                opacity: hover.hovered ? 1 : 0.6
+                                Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: Theme.Palette.on_surface
+                                    opacity: closeArea.pressed ? 0.12 : closeArea.containsMouse ? 0.08 : 0
+                                    Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf00d"
+                                    color: closeArea.containsMouse ? Theme.Palette.on_surface : Theme.Palette.on_surface_variant
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: Math.round(11 * card.s)
+                                    rotation: closeArea.containsMouse ? 90 : 0
+                                    scale: closeArea.pressed ? 0.8 : 1
+                                    Behavior on rotation { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
+                                    Behavior on scale { NumberAnimation { duration: Tokens.animationFast; easing.type: Easing.OutCubic } }
+                                    Behavior on color { ColorAnimation { duration: Tokens.animationFast } }
+                                }
+
+                                MouseArea {
+                                    id: closeArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: card.close()
+                                }
+                            }
+                        }
                     }
 
                     Text {
@@ -272,7 +431,7 @@ Item {
                         wrapMode: card.expanded ? Text.Wrap : Text.NoWrap
                         elide: Text.ElideRight
                         color: Theme.Palette.on_surface
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(14 * card.s)
                         font.weight: Font.Medium
                     }
@@ -286,15 +445,16 @@ Item {
                         wrapMode: Text.Wrap
                         maximumLineCount: card.expanded ? 1000 : card.cfg.bodyLines
                         elide: Text.ElideRight
+                        lineHeight: 1.1
                         color: Theme.Palette.on_surface_variant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Tokens.typography.family
                         font.pixelSize: Math.round(12 * card.s)
                     }
 
                     Flow {
                         width: parent.width
                         visible: card.cfg.showActions && card.buttons.length > 0
-                        topPadding: 6 * card.s
+                        topPadding: 8 * card.s
                         spacing: 6 * card.s
 
                         Repeater {
@@ -303,15 +463,19 @@ Item {
                             Rectangle {
                                 id: btn
                                 required property var modelData
+                                required property int index
+                                readonly property bool primary: index === 0
                                 width: label.implicitWidth + 24 * card.s
-                                height: 28 * card.s
+                                height: 30 * card.s
                                 radius: height / 2
-                                color: Theme.Palette.secondary_container
+                                color: primary ? Theme.Palette.primary : Theme.Palette.secondary_container
+                                scale: btnArea.pressed ? 0.95 : 1
+                                Behavior on scale { NumberAnimation { duration: Tokens.animationFast; easing.type: Easing.OutCubic } }
 
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: parent.radius
-                                    color: Theme.Palette.on_secondary_container
+                                    color: label.color
                                     opacity: btnArea.pressed ? 0.12 : btnArea.containsMouse ? 0.08 : 0
                                     Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
                                 }
@@ -320,9 +484,10 @@ Item {
                                     id: label
                                     anchors.centerIn: parent
                                     text: btn.modelData.text
-                                    color: Theme.Palette.on_secondary_container
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    color: btn.primary ? Theme.Palette.on_primary : Theme.Palette.on_secondary_container
+                                    font.family: Tokens.typography.family
                                     font.pixelSize: Math.round(12 * card.s)
+                                    font.weight: Font.Medium
                                 }
 
                                 MouseArea {
@@ -334,45 +499,6 @@ Item {
                                 }
                             }
                         }
-                    }
-                }
-
-                // Стрелка разворачивания: видна, только если текст не помещается.
-                Rectangle {
-                    id: expandBtn
-                    anchors.right: parent.right
-                    anchors.rightMargin: 10 * card.s
-                    y: 10 * card.s
-                    width: 22 * card.s
-                    height: width
-                    radius: height / 2
-                    visible: card.expanded || summaryText.truncated || bodyText.truncated
-                    color: "transparent"
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        color: Theme.Palette.on_surface
-                        opacity: expandArea.pressed ? 0.12 : expandArea.containsMouse ? 0.08 : 0
-                        Behavior on opacity { NumberAnimation { duration: Tokens.animationFast } }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "\uf078"
-                        rotation: card.expanded ? 180 : 0
-                        color: Theme.Palette.on_surface_variant
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: Math.round(11 * card.s)
-                        Behavior on rotation { NumberAnimation { duration: Tokens.animationMedium; easing.type: Easing.OutCubic } }
-                    }
-
-                    MouseArea {
-                        id: expandArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: card.expanded = !card.expanded
                     }
                 }
             }

@@ -1,0 +1,11 @@
+// >>> quickshell: security
+layer-rule {
+    match namespace="^message-card$"
+    block-out-from "screen-capture"
+}
+window-rule {
+    match app-id=r#"^org\.telegram\.desktop$"#
+    match app-id=r#"^TelegramDesktop$"#
+    block-out-from "screen-capture"
+}
+// <<< quickshell: security

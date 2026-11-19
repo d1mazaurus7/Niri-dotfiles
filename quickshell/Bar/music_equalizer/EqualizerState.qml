@@ -16,6 +16,8 @@ Item {
     readonly property string presetName: "quickshell_eq"
 
     property var gains: frequencies.map(() => 0)
+    // Полосы пресета «Свой» — последняя ручная настройка
+    property var customGains: frequencies.map(() => 0)
     // Имя выбранного пресета; "" — ручная настройка
     property string activePreset: ""
 
@@ -23,18 +25,21 @@ Item {
         const g = gains.slice();
         g[index] = Math.max(minGain, Math.min(maxGain, value));
         gains = g;
+        customGains = g;
         activePreset = matchPreset(g);
         applyTimer.restart();
+        customTimer.restart();
     }
 
     function loadPreset(preset: var) {
-        gains = preset.gains.slice();
+        gains = (preset.custom ? customGains : preset.gains).slice();
         activePreset = preset.name;
         applyTimer.restart();
     }
 
     function matchPreset(g: var): string {
-        const p = presets.find(p => p.gains.every((v, i) => v === g[i]));
+        const same = a => a.every((v, i) => v === g[i]);
+        const p = presets.find(p => p.custom ? same(customGains) : same(p.gains));
         return p ? p.name : "";
     }
 
@@ -73,6 +78,27 @@ Item {
         id: applyTimer
         interval: 200
         onTriggered: presetFile.setText(root.presetJson())
+    }
+
+    Timer {
+        id: customTimer
+        interval: 500
+        onTriggered: customFile.setText(JSON.stringify(root.customGains))
+    }
+
+    FileView {
+        id: customFile
+        path: Quickshell.statePath("equalizer_custom.json")
+        printErrors: false
+        onLoaded: {
+            try {
+                const g = JSON.parse(text());
+                if (Array.isArray(g) && g.length === root.frequencies.length) {
+                    root.customGains = g;
+                    root.activePreset = root.matchPreset(root.gains);
+                }
+            } catch (e) {}
+        }
     }
 
     FileView {

@@ -89,6 +89,16 @@ ColumnLayout {
         }
     }
 
+    SettingRow {
+        title: "Блюр фона карточек"
+        description: "Полупрозрачные карточки настроек, фон под ними размывается"
+
+        SettingSwitch {
+            checked: page.appearance.cardBlur
+            onToggled: checked => page.appearance.cardBlur = checked
+        }
+    }
+
     Text {
         Layout.topMargin: Tokens.spacingLargeV
         text: "Снег"

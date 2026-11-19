@@ -59,7 +59,6 @@
         readonly property color ok: tertiary
         readonly property color warn: secondary
         readonly property color err: error
-
-        readonly property real radius: 12
-        readonly property int pad: 10
-    }
+        readonly property color bg2: surface_container
+        readonly property color close: surface_bright
+}

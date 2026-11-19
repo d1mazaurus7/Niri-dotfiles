@@ -3,8 +3,11 @@ version_check = false
 
 [templates.niri]
 input_path = "~/.config/matugen/templates/niri-colors.conf"
-output_path = "~/.config/niri/colors.kdl"
+output_path = "~/.config/niri/config/layout.kdl"
 
+[templates.fastfetch]
+input_path = "~/.config/matugen/templates/fastfetch-colors.jsonc"
+output_path = "~/.config/fastfetch/config.jsonc"
 
 [templates.foot]
 input_path = "~/.config/matugen/templates/foot-colors.conf"
@@ -14,17 +17,26 @@ output_path = "~/.config/foot/colors.ini"
 input_path = "~/.config/matugen/templates/starship-colors.toml"
 output_path = "~/.config/starship.toml"
 
-
 [templates.quickshell]
 input_path = "~/.config/matugen/templates/quickshell-palette.qml"
 output_path = "~/.config/quickshell/theme/Palette.qml"
-
-
-[templates.swaync]
-input_path = "~/.config/matugen/templates/swaync-colors.css"
-output_path = "~/.config/swaync/style.css"
 
 [templates.rofi]
 input_path = "/home/valtrynx/.config/matugen/templates/rofi-colors.rasi"
 output_path = "/home/valtrynx/.config/rofi/colors.rasi"
 
+[templates.cava]
+input_path = "~/.config/matugen/templates/cava"
+output_path = "~/.config/cava/config"
+
+[templates.qutebrowser]
+input_path  = '~/.config/matugen/templates/qutebrowser.py'
+output_path = '~/.config/qutebrowser/matugen.py'
+
+[templates.btop]
+input_path = "~/.config/matugen/templates/btop.theme"
+output_path = "~/.config/btop/themes/matugen.theme"
+
+[templates.nvim]
+input_path = "~/.config/matugen/templates/nvim-colors.lua"
+output_path = "~/.config/nvim/lua/config/colors.lua"

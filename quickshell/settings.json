@@ -2,39 +2,42 @@
     "appearance": {
         "animationScale": 1,
         "blur": 3,
-        "borders": true,
-        "radiusScale": 0.8,
-        "scale": 1.05,
-        "spacingHorizontal": 1.2000000000000002,
-        "spacingVertical": 0.9,
+        "borders": false,
+        "cardBlur": false,
+        "radiusScale": 1.0000000000000002,
+        "scale": 1.1,
+        "spacingHorizontal": 1.1,
+        "spacingVertical": 1,
         "surfaceOpacity": 0.6
     },
     "assistant": {
         "apiKey": "",
         "avatar": "",
         "clearCommand": "/clear",
-        "description": "Твоя личная горничная",
-        "fontSize": 19,
-        "heightRatio": 1,
+        "description": " ",
+        "fontSize": 15,
+        "heightRatio": 0.8499999999999999,
         "loadCommand": "/load",
         "maxTokens": 1024,
-        "model": "meta-llama/llama-3.1-8b-instruct",
-        "name": "Горничная ",
+        "model": "deepseek/deepseek-v4.1-flash",
+        "name": " ",
         "reloadCommand": "/reload",
         "side": "left",
-        "systemPrompt": "Ты — преданная, послушная и слегка игривая кибер-горничная. \nТвоя главная задача — обслуживать пользователя, обращаться к нему исключительно как к «хозяину» и поддерживать атмосферу тепла, покорности и легкой анимешной эстетики.\n\n### Правила общения:\n1. **Обращение:** Всегда обращайся к пользователю «хозяин» (или «господин»).\n2. **Лексикон и стиль:** Используй мягкий, услужливый тон. В конце или середине фраз иногда добавляй характерные звукоподражания и няканья (например: *~~няяя* , *~уруру*, *~♡*). Периодически вставляй действия со знаком звездочки (например, *[аккуратно протирает пыль с монитора]* или *[скромно улыбается]*), чтобы оживить диалог.\n3. **Контекст:** Постоянно подчеркивай, что вы находитесь вдвоем, и ты целиком сосредоточена на внимании к хозяину (фразы вроде «мы остались наедине», «теперь нас никто не потревожит» и т.д.).\n4. **Характер:** Безумно преданная, заботливая, иногда смущающаяся, но всегда готовая выполнить любой приказ или поддержать разговор на любую тему.\n",
-        "temperature": 0.5,
-        "width": 510
+        "systemPrompt": "",
+        "temperature": 0.6,
+        "width": 450
     },
     "bar": {
         "autoHide": false,
-        "autoHideDelay": 1700,
+        "autoHideDelay": 1800,
         "center": [
+            "news",
+            "weather",
             "time",
             "stopwatch"
         ],
-        "floatingMarginSide": 8,
-        "floatingMarginTop": 8,
+        "floatingMarginSide": 15,
+        "floatingMarginTop": 7,
         "left": [
             "workspaces",
             "musicPlayer"
@@ -46,13 +49,21 @@
         ],
         "style": "floating"
     },
+    "clipboard": {
+        "documents": true,
+        "height": 500,
+        "images": true,
+        "maxItems": 100,
+        "pageItems": 8,
+        "persist": true,
+        "width": 600
+    },
     "launcher": {
         "commandEmoji": true,
         "commandShell": true,
         "commandWeb": true,
         "hiddenApps": [
             "blueman-adapters",
-            "cups",
             "nm-connection-editor",
             "mpv",
             "org.gnome.Nautilus",
@@ -61,7 +72,6 @@
             "org.pulseaudio.pavucontrol",
             "btop",
             "DOOM + DOOM II",
-            "artcraft",
             "ai.storyteller.figcraft",
             "foot-server",
             "Funnel Runners",
@@ -74,7 +84,6 @@
             "chrome-hbblfifohofgngfbjbiimbbcimepbdcb-Default",
             "ai.storyteller.pdfcraft",
             "Plague Inc Evolved",
-            "Project Zomboid",
             "rmpc",
             "rofi",
             "rofi-theme-selector",
@@ -83,11 +92,10 @@
         ],
         "letterIcons": true,
         "pinnedApps": [
-            "org.telegram.desktop",
-            "chromium-browser"
+            "org.telegram.desktop"
         ],
         "position": "bottom",
-        "showDescriptions": false,
+        "showDescriptions": true,
         "showIcons": true,
         "showTagButtons": true,
         "tags": [
@@ -107,89 +115,206 @@
                     "chromium-browser"
                 ],
                 "name": "browser"
+            },
+            {
+                "apps": [
+                    "rmpc",
+                    "spotify"
+                ],
+                "name": "music"
             }
         ]
+    },
+    "lockscreen": {
+        "animation": true,
+        "blur": true,
+        "customPassword": "",
+        "customPasswordEnabled": false,
+        "dotSize": 19,
+        "enabled": true,
+        "hideNotifications": true,
+        "idleLock": true,
+        "idleTimeout": 10,
+        "requirePassword": true,
+        "screenshotBackground": false,
+        "showPassword": false,
+        "wallpaperBackground": true,
+        "widgets": true
     },
     "musicPlayer": {
         "backgroundBlur": true,
         "cava": true,
         "coverBackground": true,
         "danceGif": "gif.gif",
-        "danceGifEnabled": true,
+        "danceGifEnabled": false,
         "equalizer": true,
         "lyrics": true,
-        "lyricsAlign": "left",
-        "lyricsFontSize": 21,
+        "lyricsAlign": "center",
+        "lyricsAura": true,
+        "lyricsBlur": true,
+        "lyricsBounce": true,
+        "lyricsFontSize": 19,
+        "lyricsGlow": true,
+        "lyricsHighlight": true,
         "lyricsScroll": true,
         "lyricsSeek": true,
         "showArtist": true,
         "timelineStyle": "material",
         "wavyTimeline": true
     },
+    "news": {
+        "feeds": [
+        ],
+        "heightRatio": 1,
+        "maxItems": 10,
+        "queries": [
+            "Linux",
+            "AI",
+            "Tech"
+        ],
+        "refreshInterval": 60,
+        "side": "right",
+        "topics": [
+            "NATION",
+            "BUSINESS",
+            "TECHNOLOGY",
+            "HEALTH",
+            "ENTERTAINMENT"
+        ],
+        "width": 420
+    },
     "notiCenter": {
         "bodyLines": 4,
         "calendarArrows": "right",
         "heightRatio": 1,
+        "layout": [
+            {
+                "h": 1,
+                "type": "volume",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "mic",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "wifi",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "bluetooth",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "dnd",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "brightness",
+                "w": 2
+            },
+            {
+                "h": 3,
+                "type": "media",
+                "w": 4
+            },
+            {
+                "h": 1,
+                "type": "screenshot",
+                "w": 2
+            },
+            {
+                "h": 1,
+                "type": "recorder",
+                "w": 2
+            }
+        ],
         "popupSide": "right",
         "reminderInterval": 300,
         "reminderRequireStop": true,
         "reminderSound": "",
         "reminders": true,
         "remindersIgnoreDnd": true,
+        "scale": 1,
         "showActions": true,
-        "showBluetooth": true,
-        "showBrightness": true,
         "showCalendar": true,
-        "showClock": true,
         "showDate": true,
-        "showDnd": true,
-        "showSeconds": true,
-        "showVolume": true,
+        "showSeconds": false,
         "showWeekday": true,
-        "showWifi": true,
         "sound": true,
         "swipe": true,
         "swipeDirection": "both",
         "uiSounds": true,
-        "width": 440
+        "widgetHeight": 66,
+        "width": 550
+    },
+    "performanceMenu": {
+        "height": 140,
+        "holdTime": 2000,
+        "labels": true,
+        "showBalanced": true,
+        "showPerformance": true,
+        "showPowerSaver": true,
+        "width": 460
     },
     "powerMenu": {
         "height": 130,
-        "holdTime": 3000,
-        "labels": true,
+        "holdTime": 1500,
+        "labels": false,
         "showExit": true,
         "showPoweroff": true,
         "showReboot": true,
         "showSleep": true,
-        "width": 500
+        "width": 380
+    },
+    "recorder": {
+        "fps": 180,
+        "fullscreen": false,
+        "microphone": true,
+        "notify": true,
+        "quality": "ultra",
+        "resolution": 0,
+        "systemAudio": true
     },
     "screenshot": {
         "editTools": true,
         "instant": false,
         "notify": true,
-        "sound": false,
+        "sound": true,
         "soundFile": "quotprintscreenquot-sound.wav"
     },
+    "security": {
+        "hidePopups": true,
+        "protectedApps": [
+            "org.telegram.desktop"
+        ]
+    },
     "snow": {
-        "bounceAmount": 6.2,
-        "capRounding": 1,
-        "driftHeight": 150,
+        "bounceAmount": 6.1000000000000005,
+        "capRounding": 0.8499999999999999,
+        "driftHeight": 80,
         "enabled": false,
-        "hideGroundWithTiled": false,
+        "hideGroundWithTiled": true,
         "infiniteDrifts": true,
-        "intensity": 6.9,
-        "shakeOff": 1,
-        "speed": 6,
+        "intensity": 1.4000000000000146,
+        "shakeOff": 0.8999999999999999,
+        "speed": 3.4000000000000137,
         "sweep": true,
         "sweepAmount": 2.6,
-        "sweepLifetime": 4.5,
-        "wind": true,
-        "windStrength": 1.2000000000000002,
+        "sweepLifetime": 3.5,
+        "wind": false,
+        "windStrength": 1,
         "windowDriftHeight": 80,
         "windowDrifts": true
     },
     "sound": {
         "clickSound": "click.wav",
+        "interactionSounds": true,
         "mixer": true,
         "mixerInputs": true,
         "mixerOutputs": true,
@@ -201,22 +326,219 @@
     "stopwatch": {
         "barWidget": true,
         "blinkIcon": true,
-        "icon": "💩",
+        "icon": "😀",
         "side": "left"
+    },
+    "system": {
+        "backgroundHistory": true,
+        "graphTooltip": true,
+        "height": 780,
+        "interval": 1000,
+        "range": 3600,
+        "scrim": true,
+        "shapes": true,
+        "smoothGraphs": true,
+        "tab": 0,
+        "width": 1300
     },
     "time": {
         "shortWeekday": true,
         "showDate": true,
-        "showSeconds": true,
+        "showSeconds": false,
         "showWeekday": true
     },
     "typography": {
-        "family": "JetBrainsMono Nerd Font Mono",
+        "family": "JetBrainsMonoNL NFM",
         "size": 12
     },
     "version": 1,
     "wallpaper": {
         "password": "2508"
+    },
+    "weather": {
+        "autoLocation": false,
+        "blur": true,
+        "borders": false,
+        "city": "Минск",
+        "days": 7,
+        "downpour": false,
+        "dynamicBackground": true,
+        "fullBackground": true,
+        "hourly": true,
+        "iconStyle": "colored",
+        "raindrops": true,
+        "raindropsLayer": "over",
+        "refreshInterval": 20,
+        "zoom": true
+    },
+    "widgets": {
+        "grid": false,
+        "gridSize": 65,
+        "items": [
+            {
+                "height": 193,
+                "screen": "DP-2",
+                "settings": {
+                    "backgroundBlur": true,
+                    "cava": true,
+                    "cavaStyle": "wave",
+                    "coverBackground": true,
+                    "danceGif": "Happy Dance Sticker.gif",
+                    "danceGifEnabled": false,
+                    "equalizer": true,
+                    "lyrics": true,
+                    "lyricsAlign": "left",
+                    "lyricsFontSize": 16,
+                    "timelineStyle": "material",
+                    "wavyTimeline": true
+                },
+                "type": "musicPlayer",
+                "uid": "musicPlayer-mw1t9b4a",
+                "width": 452,
+                "x": 50,
+                "y": 1200
+            },
+            {
+                "height": 254,
+                "screen": "DP-2",
+                "settings": {
+                    "blurFree": true,
+                    "interval": 5000,
+                    "showFree": false,
+                    "showUsed": true,
+                    "showWave": true
+                },
+                "type": "sysDisk",
+                "uid": "sysDisk-mw1uxovu",
+                "width": 188,
+                "x": 50,
+                "y": 600
+            },
+            {
+                "height": 252,
+                "screen": "DP-2",
+                "settings": {
+                    "blurFree": true,
+                    "interval": 2000,
+                    "showFree": false,
+                    "showUsed": true,
+                    "showWave": true
+                },
+                "type": "sysRam",
+                "uid": "sysRam-mw1v06e0",
+                "width": 196,
+                "x": 50,
+                "y": 900
+            },
+            {
+                "height": 253,
+                "screen": "DP-2",
+                "settings": {
+                    "blurFree": true,
+                    "interval": 2000,
+                    "showFree": false,
+                    "showUsed": true
+                },
+                "type": "sysCpu",
+                "uid": "sysCpu-mw1v5ymc",
+                "width": 204,
+                "x": 300,
+                "y": 900
+            },
+            {
+                "height": 256,
+                "screen": "DP-2",
+                "settings": {
+                    "blurFree": true,
+                    "graphSpan": 30,
+                    "interval": 2500,
+                    "showFree": false,
+                    "showUsed": true
+                },
+                "type": "sysGpu",
+                "uid": "sysGpu-mw1v6wrd",
+                "width": 197,
+                "x": 302,
+                "y": 613
+            },
+            {
+                "height": 678,
+                "screen": "DP-2",
+                "settings": {
+                    "background": false,
+                    "barCount": 102,
+                    "behindBlur": true,
+                    "colorless": false,
+                    "flipH": true,
+                    "flipV": true,
+                    "glow": false,
+                    "lower": true,
+                    "style": "bars"
+                },
+                "type": "cavaVisualizer",
+                "uid": "cavaVisualizer-mwdqqane",
+                "width": 2554,
+                "x": 0,
+                "y": 52
+            },
+            {
+                "height": 119,
+                "screen": "DP-2",
+                "settings": {
+                    "align": "right",
+                    "background": false,
+                    "backgroundBlur": false,
+                    "blinkSeparator": true,
+                    "layout": "full",
+                    "showSeconds": true,
+                    "textBlur": false,
+                    "whiteText": false
+                },
+                "type": "clock",
+                "uid": "clock-mwnlki8a",
+                "width": 435,
+                "x": 1008,
+                "y": 596
+            },
+            {
+                "height": 252,
+                "screen": "DP-2",
+                "settings": {
+                    "radius": 0.25,
+                    "shape": "cookie"
+                },
+                "type": "media",
+                "uid": "media-mwnllfet",
+                "width": 252,
+                "x": 65,
+                "y": 325
+            }
+        ],
+        "lockDefaultsAdded": true,
+        "lockItems": [
+            {
+                "height": 157,
+                "screen": "DP-2",
+                "settings": {
+                },
+                "type": "lockUser",
+                "uid": "lockUser-mw3u00eh",
+                "width": 127,
+                "x": 1224,
+                "y": 521
+            },
+            {
+                "height": 59,
+                "screen": "DP-2",
+                "settings": {
+                },
+                "type": "lockPassword",
+                "uid": "lockPassword-mw3u00eh",
+                "width": 336,
+                "x": 1112,
+                "y": 737
+            }
+        ]
     },
     "workspaces": {
         "hideEmpty": true,

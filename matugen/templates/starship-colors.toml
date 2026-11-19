@@ -33,7 +33,7 @@
     lang_bg = "{{ colors.surface_container.default.hex }}"
     lang_fg = "{{ colors.primary.default.hex }}"
 
-    time_bg = "{{ colors.surface_container_lowest.default.hex }}"
+    time_bg = "{{ colors.surface_container.default.hex }}"
     time_fg = "{{ colors.on_surface_variant.default.hex }}"
 
     # character

@@ -8,6 +8,10 @@ Scope {
     id: root
 
     readonly property bool enabled: Config.options.snow.enabled
+    // Заставка только при включении из настроек, не при загрузке конфига
+    property bool introPlaying: false
+
+    onEnabledChanged: introPlaying = enabled && Config.ready
 
     NiriWindows {
         id: niriWindows
@@ -15,10 +19,18 @@ Scope {
     }
 
     Variants {
-        model: root.enabled ? Quickshell.screens : []
+        model: root.enabled && !root.introPlaying ? Quickshell.screens : []
 
         SnowWindow {
             niri: niriWindows
+        }
+    }
+
+    Variants {
+        model: root.introPlaying ? Quickshell.screens : []
+
+        SnowIntro {
+            onFinished: root.introPlaying = false
         }
     }
 }
