@@ -17,7 +17,7 @@ cd Niri-dotfiles
 arch-based/update.sh arch-based/dependenses.sh install/arch-based.sh
 mkdir -p ~/.local/bin/
 mv scripts/set-wallpaper.sh ~/.local/bin/set-wallpaper
-chmod +x ~/.local/bin/set-wallpaper.sh
+chmod +x ~/.local/bin/set-wallpaper
 ```
 To update run:
 ``` bash
