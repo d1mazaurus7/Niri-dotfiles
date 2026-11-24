@@ -15,6 +15,7 @@ Clone the repository:
 git clone https://github.com/d1mazaurus7/Niri-dotfiles.git
 cd Niri-dotfiles
 chmod +x scripts/set-wallpaper.sh arch-based/update.sh arch-based/dependenses.sh install/arch-based.sh
+mv scripts/set-wallpapers.sh ~/.local/bin/set-wallpaper
 ```
 To update run:
 ``` bash
