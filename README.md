@@ -29,8 +29,8 @@ cd ~/Niri-dotfiles/
 ## Credits & Acknowledgments
 
 This project is built with inspiration and assets from the open-source community:
-* **[ilyamiro](https://github.com/ilyamiro)** — Huge thanks for the amazing UI design ideas and elements that inspired the creation of this shell.
-* **[serpantinum](https://github.com/ilyamiro/serpantinum)** — The original project from which the UI sound effects were sourced.
+* **[ilyamiro](https://github.com/ilyamiro)** - Huge thanks for the amazing UI design ideas and elements that inspired the creation of this shell.
+* **[serpantinum](https://github.com/ilyamiro/serpantinum)** - The original project from which the UI sound effects were sourced.
 
 ---
 
